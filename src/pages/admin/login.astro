@@ -1,0 +1,153 @@
+---
+export const prerender = false;
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập Quản trị | Cẩm Đức Hiệp</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+      .login-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 1rem;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      }
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #94a3b8;
+      }
+      input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #0f172a;
+        border: 1px solid #475569;
+        border-radius: 0.5rem;
+        color: #fff;
+        font-size: 1rem;
+        transition: border-color 0.15s ease;
+      }
+      input:focus {
+        outline: none;
+        border-color: #0284c7;
+      }
+      .btn {
+        width: 100%;
+        padding: 0.8rem;
+        background: #0284c7;
+        color: #fff;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .btn:hover { background: #0369a1; }
+      .error-box {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid #ef4444;
+        color: #fca5a5;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-card">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="width: 48px; height: 48px; background: #0284c7; border-radius: 12px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700;">
+          C
+        </div>
+        <h1 style="font-size: 1.5rem; font-weight: 700; color: #fff;">Quản trị Website</h1>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.4rem;">Đăng nhập để quản lý và viết bài</p>
+      </div>
+
+      <div id="error-message" class="error-box"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Tên đăng nhập</label>
+          <input type="text" id="username" name="username" placeholder="admin" required autofocus />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" class="btn" id="submit-btn">Đăng nhập</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <a href="/" style="color: #64748b; font-size: 0.85rem; text-decoration: none;">← Về trang chủ</a>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('login-form') as HTMLFormElement;
+      const errorBox = document.getElementById('error-message') as HTMLDivElement;
+      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Đang kiểm tra...';
+
+        const formData = new FormData(form);
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            window.location.href = data.redirect || '/admin';
+          } else {
+            errorBox.innerText = data.error || 'Đăng nhập không thành công.';
+            errorBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Đăng nhập';
+          }
+        } catch (err) {
+          errorBox.innerText = 'Đã có lỗi kết nối đến máy chủ.';
+          errorBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Đăng nhập';
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,110 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+export const prerender = false;
+
+interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  cover_image: string;
+  created_at: string;
+}
+
+let posts: Post[] = [];
+const db = Astro.locals.runtime?.env?.DB;
+
+if (db) {
+  try {
+    const { results } = await db.prepare(
+      "SELECT id, title, slug, excerpt, cover_image, created_at FROM posts WHERE status = 'published' ORDER BY created_at DESC"
+    ).all<Post>();
+    posts = results || [];
+  } catch (err) {
+    console.error('Lỗi truy vấn D1:', err);
+  }
+} else {
+  // Sample initial post if D1 not yet created
+  posts = [
+    {
+      id: 1,
+      title: 'Chào mừng đến với website Cẩm Đức Hiệp',
+      slug: 'chao-mung-den-voi-website-cam-duc-hiep',
+      excerpt: 'Khám phá các bài viết, tin tức và chia sẻ mới nhất được cập nhật trực tiếp qua hệ thống quản trị Cloudflare D1.',
+      cover_image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80',
+      created_at: new Date().toISOString()
+    }
+  ];
+}
+---
+
+<Layout title="Trang chủ">
+  <div class="container">
+    <!-- Hero Section -->
+    <section style="text-align: center; padding: 3rem 0 4rem; max-width: 760px; margin: 0 auto;">
+      <h1 style="font-family: var(--font-serif); font-size: 3rem; font-weight: 700; color: #0f172a; line-height: 1.2; letter-spacing: -0.03em;">
+        Cẩm Đức Hiệp
+      </h1>
+      <p style="font-size: 1.2rem; color: #64748b; margin-top: 1rem; line-height: 1.6;">
+        Không gian chia sẻ các bài viết, dự án và thông tin được cập nhật liên tục.
+      </p>
+    </section>
+
+    <!-- Posts Grid -->
+    <section>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: #0f172a;">Bài viết mới nhất</h2>
+        <span style="font-size: 0.9rem; color: #64748b;">{posts.length} bài viết</span>
+      </div>
+
+      {posts.length === 0 ? (
+        <div style="text-align: center; padding: 5rem 0; color: #94a3b8;">
+          <p style="font-size: 1.1rem;">Chưa có bài viết nào được xuất bản.</p>
+        </div>
+      ) : (
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+          {posts.map((post) => (
+            <article style="background: #ffffff; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px -10px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
+              {post.cover_image && (
+                <a href={`/bai-viet/${post.slug}`} style="display: block; aspect-ratio: 16/9; overflow: hidden;">
+                  <img 
+                    src={post.cover_image} 
+                    alt={post.title} 
+                    loading="lazy" 
+                    style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
+                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.transform='scale(1)'"
+                  />
+                </a>
+              )}
+              <div style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
+                <time style="font-size: 0.8rem; font-weight: 600; color: #0284c7; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">
+                  {new Date(post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </time>
+
+                <h3 style="font-size: 1.25rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.75rem;">
+                  <a href={`/bai-viet/${post.slug}`} style="color: #0f172a; transition: color 0.15s;" onmouseover="this.style.color='#0284c7'" onmouseout="this.style.color='#0f172a'">
+                    {post.title}
+                  </a>
+                </h3>
+
+                {post.excerpt && (
+                  <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; flex: 1;">
+                    {post.excerpt}
+                  </p>
+                )}
+
+                <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                  <a href={`/bai-viet/${post.slug}`} style="color: #0284c7; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    Đọc tiếp <span>→</span>
+                  </a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  </div>
+</Layout>

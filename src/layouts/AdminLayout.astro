@@ -1,0 +1,127 @@
+---
+interface Props {
+  title: string;
+  activeTab?: 'posts' | 'new';
+}
+
+const { title, activeTab = 'posts' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | Quản trị Cẩm Đức Hiệp</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Quill.js WYSIWYG Editor CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js" defer></script>
+
+    <style is:global>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        background-color: #f1f5f9;
+        color: #0f172a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.1rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all 0.15s ease;
+      }
+      .btn-primary { background: #0284c7; color: #fff; }
+      .btn-primary:hover { background: #0369a1; }
+      .btn-secondary { background: #e2e8f0; color: #334155; }
+      .btn-secondary:hover { background: #cbd5e1; }
+      .btn-danger { background: #ef4444; color: #fff; }
+      .btn-danger:hover { background: #dc2626; }
+      .card {
+        background: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+      }
+      /* Quill Editor Styling Override for WordPress Feel */
+      .ql-toolbar {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+        background: #f8fafc;
+        border-color: #cbd5e1 !important;
+      }
+      .ql-container {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        min-height: 320px;
+        font-size: 1.05rem;
+        border-color: #cbd5e1 !important;
+        background: #ffffff;
+      }
+      .ql-editor {
+        min-height: 320px;
+        line-height: 1.65;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Topbar -->
+    <header style="background: #0f172a; color: #f8fafc; padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <a href="/admin" style="font-weight: 700; font-size: 1.1rem; color: #ffffff; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="background: #0284c7; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">C</span>
+          Cẩm Đức Hiệp Admin
+        </a>
+        <a href="/" target="_blank" style="color: #94a3b8; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Xem trang web
+        </a>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <form method="POST" action="/api/auth/logout" style="margin: 0;">
+          <button type="submit" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+            Đăng xuất
+          </button>
+        </form>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div style="display: flex; flex: 1;">
+      <!-- Sidebar -->
+      <aside style="width: 240px; background: #ffffff; border-right: 1px solid #e2e8f0; padding: 1.5rem 1rem;">
+        <nav style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <a href="/admin" class={activeTab === 'posts' ? 'btn btn-primary' : 'btn btn-secondary'} style="justify-content: flex-start; text-align: left;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Tất cả bài viết
+          </a>
+          <a href="/admin/them-moi" class={activeTab === 'new' ? 'btn btn-primary' : 'btn btn-secondary'} style="justify-content: flex-start; text-align: left;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Thêm bài mới
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Content Area -->
+      <main style="flex: 1; padding: 2rem; max-width: 1100px;">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

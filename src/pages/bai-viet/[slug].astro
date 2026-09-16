@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+const db = Astro.locals.runtime?.env?.DB;
+
+interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image: string;
+  created_at: string;
+  updated_at: string;
+}
+
+let post: Post | null = null;
+
+if (db && slug) {
+  try {
+    post = await db.prepare(
+      "SELECT * FROM posts WHERE slug = ? AND status = 'published'"
+    ).bind(slug).first<Post>();
+  } catch (err) {
+    console.error('Lỗi truy vấn chi tiết bài viết:', err);
+  }
+} else {
+  // Sample fallback post
+  post = {
+    id: 1,
+    title: 'Chào mừng đến với website Cẩm Đức Hiệp',
+    slug: 'chao-mung-den-voi-website-cam-duc-hiep',
+    excerpt: 'Đây là bài viết đầu tiên được xuất bản từ hệ thống quản trị nội dung của website.',
+    content: '<h2>Xin chào!</h2><p>Đây là bài viết mẫu được lưu trữ an toàn trong <strong>Cloudflare D1 Database</strong> và phục vụ thông qua <strong>Astro Server-Side Rendering</strong> trên mạng lưới Cloudflare Edge toàn cầu.</p><p>Người quản trị có thể truy cập <code>/admin</code> bất kỳ lúc nào để chỉnh sửa hoặc viết thêm bài mới bằng trình soạn thảo trực quan.</p>',
+    cover_image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={post.title} description={post.excerpt} ogImage={post.cover_image}>
+  <article class="container" style="padding-top: 1rem; padding-bottom: 4rem;">
+    <!-- Breadcrumb & Back button -->
+    <div style="margin-bottom: 2rem;">
+      <a href="/" style="color: #64748b; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+        ← Quay lại trang chủ
+      </a>
+    </div>
+
+    <!-- Article Header -->
+    <header style="max-width: 760px; margin: 0 auto 2.5rem; text-align: center;">
+      <time style="font-size: 0.85rem; font-weight: 600; color: #0284c7; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">
+        {new Date(post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </time>
+      <h1 style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 700; color: #0f172a; line-height: 1.25; margin-bottom: 1rem;">
+        {post.title}
+      </h1>
+      {post.excerpt && (
+        <p style="font-size: 1.2rem; color: #475569; line-height: 1.6; font-style: italic;">
+          {post.excerpt}
+        </p>
+      )}
+    </header>
+
+    <!-- Cover Image -->
+    {post.cover_image && (
+      <div style="max-width: 880px; margin: 0 auto 3rem; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);">
+        <img 
+          src={post.cover_image} 
+          alt={post.title} 
+          style="width: 100%; height: auto; display: block; max-height: 500px; object-fit: cover;"
+        />
+      </div>
+    )}
+
+    <!-- Article Body -->
+    <div class="prose" set:html={post.content}></div>
+
+    <!-- Footer Share & Navigation -->
+    <footer style="max-width: 760px; margin: 3.5rem auto 0; padding-top: 2rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <a href="/" style="color: #0284c7; font-weight: 600; font-size: 0.95rem; text-decoration: none;">
+        ← Xem các bài viết khác
+      </a>
+      <a href="/admin" style="color: #94a3b8; font-size: 0.85rem; text-decoration: none;">
+        Chỉnh sửa bài này trong Quản trị
+      </a>
+    </footer>
+  </article>
+</Layout>

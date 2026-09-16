@@ -1,0 +1,186 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+
+<AdminLayout title="Viết bài mới" activeTab="new">
+  <div style="margin-bottom: 2rem;">
+    <a href="/admin" style="color: #64748b; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+      ← Quay lại danh sách
+    </a>
+    <h1 style="font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem;">Thêm bài viết mới</h1>
+  </div>
+
+  <form id="post-form">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+      <!-- Left Column: Main Editor -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="card">
+          <label style="display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; color: #334155;">
+            Tiêu đề bài viết <span style="color: #ef4444;">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="title" 
+            id="post-title" 
+            placeholder="Nhập tiêu đề bài viết tại đây..." 
+            required 
+            style="width: 100%; padding: 0.85rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 1.2rem; font-weight: 600; color: #0f172a;"
+          />
+        </div>
+
+        <div class="card">
+          <label style="display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; color: #334155;">
+            Nội dung bài viết <span style="color: #ef4444;">*</span>
+          </label>
+          <!-- Quill Editor Container -->
+          <div id="quill-editor"></div>
+          <input type="hidden" name="content" id="post-content" />
+        </div>
+
+        <div class="card">
+          <label style="display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; color: #334155;">
+            Đoạn trích tóm tắt (Excerpt)
+          </label>
+          <textarea 
+            name="excerpt" 
+            rows="3" 
+            placeholder="Mô tả ngắn gọn nội dung bài viết để hiển thị ngoài trang chủ..." 
+            style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; color: #334155;"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Right Column: Settings & Publishing -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Publish Action Card -->
+        <div class="card">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+            Xuất bản
+          </h3>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 0.4rem;">
+              Trạng thái bài viết
+            </label>
+            <select name="status" id="post-status" style="width: 100%; padding: 0.6rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.95rem; background: #fff;">
+              <option value="published">Đăng ngay (Xuất bản)</option>
+              <option value="draft">Bản nháp (Chưa đăng)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button type="submit" id="btn-submit" class="btn btn-primary" style="justify-content: center; width: 100%; padding: 0.75rem;">
+              Xuất bản bài viết
+            </button>
+            <button type="button" id="btn-save-draft" class="btn btn-secondary" style="justify-content: center; width: 100%; padding: 0.75rem;">
+              Lưu bản nháp
+            </button>
+          </div>
+        </div>
+
+        <!-- Cover Image Card -->
+        <div class="card">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+            Ảnh đại diện (Cover)
+          </h3>
+          <input 
+            type="url" 
+            name="cover_image" 
+            id="cover-image-input" 
+            placeholder="Dán đường dẫn ảnh (URL)..." 
+            style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem;"
+          />
+          <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.5rem;">
+            Có thể dùng ảnh từ Unsplash, Cloudflare R2 hoặc bất kỳ link ảnh công khai nào.
+          </p>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    // Initialize Quill Editor when loaded
+    let quill: any;
+
+    function initQuill() {
+      // @ts-ignore
+      if (typeof Quill !== 'undefined') {
+        // @ts-ignore
+        quill = new Quill('#quill-editor', {
+          theme: 'snow',
+          placeholder: 'Soạn thảo nội dung bài viết tại đây...',
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['blockquote', 'code-block'],
+              [{ align: [] }],
+              ['link', 'image'],
+              ['clean']
+            ]
+          }
+        });
+      } else {
+        setTimeout(initQuill, 100);
+      }
+    }
+
+    initQuill();
+
+    const form = document.getElementById('post-form') as HTMLFormElement;
+    const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
+    const btnSaveDraft = document.getElementById('btn-save-draft') as HTMLButtonElement;
+    const statusSelect = document.getElementById('post-status') as HTMLSelectElement;
+
+    btnSaveDraft.addEventListener('click', () => {
+      statusSelect.value = 'draft';
+      form.requestSubmit();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!quill) {
+        alert('Trình soạn thảo đang tải, vui lòng thử lại sau 1 giây.');
+        return;
+      }
+
+      const contentHTML = quill.root.innerHTML;
+      if (!contentHTML || contentHTML === '<p><br></p>') {
+        alert('Vui lòng nhập nội dung bài viết.');
+        return;
+      }
+
+      (document.getElementById('post-content') as HTMLInputElement).value = contentHTML;
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Đang lưu...';
+
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Đã lưu bài viết thành công!');
+          window.location.href = '/admin';
+        } else {
+          alert(data.error || 'Có lỗi xảy ra.');
+          btnSubmit.disabled = false;
+          btnSubmit.innerText = 'Xuất bản bài viết';
+        }
+      } catch (err) {
+        alert('Lỗi kết nối máy chủ.');
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = 'Xuất bản bài viết';
+      }
+    });
+  </script>
+</AdminLayout>

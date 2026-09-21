@@ -1,152 +1,267 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { films } from '../../data/films';
 
 export const prerender = false;
 
-interface Post {
-  id: number;
-  title: string;
-  slug: string;
-  excerpt: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+// Category colors helper
+function getCategoryBadge(category: string) {
+  const cat = category.toLowerCase();
+  if (cat.includes('essay')) return { bg: '#fef3c7', text: '#92400e', border: '#fde68a' };
+  if (cat.includes('hybrid')) return { bg: '#f3e8ff', text: '#6b21a8', border: '#e9d5ff' };
+  if (cat.includes('documentary')) return { bg: '#dcfce7', text: '#166534', border: '#bbf7d0' };
+  if (cat.includes('fiction')) return { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' };
+  if (cat.includes('experimental')) return { bg: '#ffe4e6', text: '#9f1239', border: '#fecdd3' };
+  return { bg: '#f1f5f9', text: '#475569', border: '#e2e8f0' };
 }
 
-let posts: Post[] = [];
-let error: string | null = null;
-
-const db = Astro.locals.runtime?.env?.DB;
-
-if (db) {
-  try {
-    const { results } = await db.prepare(
-      'SELECT id, title, slug, excerpt, status, created_at, updated_at FROM posts ORDER BY created_at DESC'
-    ).all<Post>();
-    posts = results || [];
-  } catch (err: any) {
-    error = err.message || 'Không thể tải danh sách bài viết từ database.';
+// Stage status helper
+function getStatusBadge(year: string) {
+  const y = year.toLowerCase();
+  if (y.includes('developing')) {
+    return { label: 'Đang phát triển (Development)', bg: '#fef9c3', text: '#854d0e' };
   }
-} else {
-  // Mock post if DB binding not yet available
-  posts = [
-    {
-      id: 1,
-      title: 'Chào mừng đến với website Cẩm Đức Hiệp',
-      slug: 'chao-mung-den-voi-website-cam-duc-hiep',
-      excerpt: 'Bài viết mẫu đầu tiên của hệ thống.',
-      status: 'published',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
+  if (y.includes('post production')) {
+    return { label: 'Đang hậu kỳ (Post-production)', bg: '#ffedd5', text: '#9a3412' };
+  }
+  return { label: 'Đã hoàn thành', bg: '#dcfce7', text: '#166534' };
 }
+
+// Calculate summary stats
+const totalFilms = films.length;
+const totalStills = films.reduce((acc, f) => acc + (f.stills?.length || 0), 0);
+const developingCount = films.filter(f => f.year.toLowerCase().includes('developing')).length;
+const postProdCount = films.filter(f => f.year.toLowerCase().includes('post production')).length;
+const completedCount = totalFilms - developingCount - postProdCount;
 ---
 
-<AdminLayout title="Bảng điều khiển" activeTab="posts">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<AdminLayout title="Quản lý Phim" activeTab="films">
+  <!-- Page Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
     <div>
-      <h1 style="font-size: 1.75rem; font-weight: 700; color: #0f172a;">Quản lý bài viết</h1>
-      <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.25rem;">
-        Tổng cộng {posts.length} bài viết
+      <h1 style="font-size: 1.85rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
+        Quản lý Danh mục Phim (Films)
+      </h1>
+      <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.35rem;">
+        Hệ thống quản trị danh mục tác phẩm điện ảnh của Đạo diễn Cầm Đức Hiệp. Hiện có {totalFilms} phim đang hiển thị ngoài website.
       </p>
     </div>
-    <a href="/admin/them-moi" class="btn btn-primary">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Viết bài mới
-    </a>
-  </div>
-
-  {error && (
-    <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-      {error}
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="/" target="_blank" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Xem menu ngoài web
+      </a>
+      <a href="/admin/films/them-moi" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm phim mới
+      </a>
     </div>
-  )}
-
-  <div class="card" style="padding: 0; overflow: hidden;">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
-      <thead>
-        <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
-          <th style="padding: 1rem 1.5rem;">Tiêu đề bài viết</th>
-          <th style="padding: 1rem 1.5rem; width: 150px;">Trạng thái</th>
-          <th style="padding: 1rem 1.5rem; width: 180px;">Ngày tạo</th>
-          <th style="padding: 1rem 1.5rem; width: 180px; text-align: right;">Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        {posts.length === 0 ? (
-          <tr>
-            <td colspan="4" style="padding: 3rem; text-align: center; color: #94a3b8;">
-              Chưa có bài viết nào. Hãy bấm <strong>Viết bài mới</strong> để bắt đầu!
-            </td>
-          </tr>
-        ) : (
-          posts.map((post) => (
-            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-              <td style="padding: 1.25rem 1.5rem;">
-                <div style="font-weight: 600; color: #0f172a; font-size: 1rem;">
-                  {post.title}
-                </div>
-                <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">
-                  /{post.slug}
-                </div>
-              </td>
-              <td style="padding: 1.25rem 1.5rem;">
-                {post.status === 'published' ? (
-                  <span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: #dcfce7; color: #166534;">
-                    ● Đã xuất bản
-                  </span>
-                ) : (
-                  <span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: #fef9c3; color: #854d0e;">
-                    ○ Bản nháp
-                  </span>
-                )}
-              </td>
-              <td style="padding: 1.25rem 1.5rem; color: #64748b; font-size: 0.85rem;">
-                {new Date(post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'short', day: 'numeric' })}
-              </td>
-              <td style="padding: 1.25rem 1.5rem; text-align: right;">
-                <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
-                  <a href={`/bai-viet/${post.slug}`} target="_blank" style="padding: 0.35rem 0.6rem; border-radius: 0.375rem; background: #f1f5f9; color: #475569; font-size: 0.85rem; text-decoration: none;" title="Xem bài viết">
-                    Xem
-                  </a>
-                  <a href={`/admin/sua/${post.id}`} style="padding: 0.35rem 0.6rem; border-radius: 0.375rem; background: #e0f2fe; color: #0369a1; font-size: 0.85rem; font-weight: 600; text-decoration: none;" title="Chỉnh sửa">
-                    Sửa
-                  </a>
-                  <button type="button" class="delete-btn" data-id={post.id} data-title={post.title} style="padding: 0.35rem 0.6rem; border-radius: 0.375rem; background: #fee2e2; color: #b91c1c; border: none; font-size: 0.85rem; cursor: pointer;" title="Xóa bài">
-                    Xóa
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
   </div>
 
-  <script>
-    document.querySelectorAll('.delete-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-id');
-        const title = btn.getAttribute('data-title');
-        if (!confirm(`Bạn có chắc chắn muốn xóa bài viết:\n"${title}"?`)) {
-          return;
-        }
+  <!-- Stats Overview Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.25rem;">
+    <!-- Stat 1 -->
+    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
+      <div style="width: 48px; height: 48px; border-radius: 10px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        🎬
+      </div>
+      <div>
+        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Tổng số phim</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1.2; margin-top: 0.15rem;">
+          {totalFilms} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">tác phẩm</span>
+        </div>
+      </div>
+    </div>
 
-        try {
-          const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert('Đã xóa bài viết thành công.');
-            window.location.reload();
-          } else {
-            alert(data.error || 'Có lỗi xảy ra khi xóa.');
-          }
-        } catch (err) {
-          alert('Lỗi kết nối máy chủ.');
-        }
-      });
-    });
-  </script>
+    <!-- Stat 2 -->
+    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
+      <div style="width: 48px; height: 48px; border-radius: 10px; background: #dcfce7; color: #166534; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        ✓
+      </div>
+      <div>
+        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Đã hoàn thành</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #166534; line-height: 1.2; margin-top: 0.15rem;">
+          {completedCount} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">phim</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
+      <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffedd5; color: #9a3412; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        ⏳
+      </div>
+      <div>
+        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Hậu kỳ & Phát triển</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #9a3412; line-height: 1.2; margin-top: 0.15rem;">
+          {postProdCount + developingCount} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">phim</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 4 -->
+    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
+      <div style="width: 48px; height: 48px; border-radius: 10px; background: #f1f5f9; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        📸
+      </div>
+      <div>
+        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Ảnh tư liệu & Stills</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1.2; margin-top: 0.15rem;">
+          {totalStills} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">hình ảnh</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Films Table / Cards List -->
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    {films.map((film, index) => {
+      const catStyle = getCategoryBadge(film.category);
+      const statusStyle = getStatusBadge(film.year);
+
+      return (
+        <div class="card" style="padding: 1.5rem; transition: transform 0.15s, box-shadow 0.15s; border: 1px solid #e2e8f0;">
+          <div style="display: flex; gap: 1.75rem; align-items: flex-start;">
+            <!-- Film Index Badge -->
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.25rem;">
+              {index + 1}
+            </div>
+
+            <!-- Thumbnail Poster Preview -->
+            <div style="width: 170px; height: 105px; border-radius: 0.5rem; overflow: hidden; background: #0f172a; flex-shrink: 0; position: relative; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+              {film.thumbnail ? (
+                <img 
+                  src={film.thumbnail} 
+                  alt={film.title}
+                  style="width: 100%; height: 100%; object-fit: cover;"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                />
+              ) : null}
+              <div style={`width: 100%; height: 100%; display: ${film.thumbnail ? 'none' : 'flex'}; align-items: center; justify-content: center; color: #64748b; font-size: 0.75rem;`}>
+                Chưa có ảnh
+              </div>
+            </div>
+
+            <!-- Film Main Details -->
+            <div style="flex: 1; min-width: 0;">
+              <!-- Title Row -->
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem;">
+                <div style="display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;">
+                  <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
+                    {film.title}
+                  </h2>
+                  {film.originalTitle && (
+                    <span style="font-size: 1rem; color: #64748b; font-style: italic;">
+                      ({film.originalTitle})
+                    </span>
+                  )}
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                  <a 
+                    href={`/films/${film.slug}`} 
+                    target="_blank" 
+                    class="btn btn-outline" 
+                    style="padding: 0.4rem 0.75rem; font-size: 0.82rem;"
+                    title="Mở xem trên giao diện người dùng"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    Xem ngoài web
+                  </a>
+                  <a 
+                    href={`/admin/films/sua/${film.slug}`} 
+                    class="btn btn-primary" 
+                    style="padding: 0.4rem 0.85rem; font-size: 0.82rem;"
+                    title="Chỉnh sửa thông tin phim"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Chỉnh sửa
+                  </a>
+                </div>
+              </div>
+
+              <!-- Badges Row: Category, Year/Stage, Duration -->
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                <!-- Category Badge -->
+                <span style={`padding: 0.2rem 0.6rem; border-radius: 0.375rem; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: ${catStyle.bg}; color: ${catStyle.text}; border: 1px solid ${catStyle.border};`}>
+                  {film.category}
+                </span>
+
+                <!-- Status / Stage Badge -->
+                <span style={`padding: 0.2rem 0.6rem; border-radius: 0.375rem; font-size: 0.78rem; font-weight: 600; background: ${statusStyle.bg}; color: ${statusStyle.text};`}>
+                  ● {statusStyle.label}
+                </span>
+
+                <!-- Year & Duration -->
+                <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
+                  Năm: <strong style="color: #334155;">{film.year}</strong>
+                </span>
+
+                {film.duration && (
+                  <>
+                    <span style="color: #cbd5e1;">•</span>
+                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
+                      Thời lượng: <strong style="color: #334155;">{film.duration}</strong>
+                    </span>
+                  </>
+                )}
+
+                <span style="color: #cbd5e1;">•</span>
+                <span style="font-size: 0.82rem; color: #94a3b8; font-family: monospace;">
+                  /films/{film.slug}
+                </span>
+              </div>
+
+              <!-- Technical Format Specification -->
+              <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.65rem; background: #f8fafc; padding: 0.4rem 0.75rem; border-radius: 0.375rem; border: 1px solid #f1f5f9; display: inline-block;">
+                <span style="color: #64748b; font-weight: 600;">Quy cách:</span> {film.format}
+              </div>
+
+              <!-- Synopsis Snippet -->
+              <p style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin-bottom: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {film.synopsis}
+              </p>
+
+              <!-- Gallery & Credits Count Tags -->
+              <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; font-size: 0.82rem; color: #64748b;">
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                  <!-- Stills Counter & Mini Thumbnails -->
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>📸 <strong>{film.stills?.length || 0}</strong> ảnh stills</span>
+                    <div style="display: flex; gap: 4px;">
+                      {film.stills?.slice(0, 4).map((st, sIdx) => (
+                        <img 
+                          src={st} 
+                          alt={`still ${sIdx}`} 
+                          style="width: 28px; height: 18px; object-fit: cover; border-radius: 2px; border: 1px solid #cbd5e1;" 
+                        />
+                      ))}
+                      {(film.stills?.length || 0) > 4 && (
+                        <span style="font-size: 0.75rem; background: #f1f5f9; padding: 0 4px; border-radius: 2px; line-height: 18px;">
+                          +{film.stills.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <!-- Credits Counter -->
+                  <div>
+                    👥 <strong>{film.credits?.length || 0}</strong> vai trò ekip ({film.credits?.[0]?.role}: {film.credits?.[0]?.names?.join(', ')})
+                  </div>
+                </div>
+
+                <a 
+                  href={`/admin/films/sua/${film.slug}`} 
+                  style="color: #0284c7; font-weight: 600; text-decoration: none; font-size: 0.82rem;"
+                >
+                  Xem chi tiết & sửa →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
 </AdminLayout>

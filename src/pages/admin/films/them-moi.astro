@@ -1,0 +1,203 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+
+<AdminLayout title="Thêm phim mới" activeTab="new-film">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <a href="/admin" style="color: #64748b; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+        ← Quay lại danh mục Phim
+      </a>
+      <h1 style="font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem; letter-spacing: -0.01em;">
+        Thêm tác phẩm phim mới
+      </h1>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" onclick="alert('Đã lưu thông tin phim mới vào danh mục!')" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tạo phim mới
+      </button>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 2rem; align-items: start;">
+    <!-- Left Column: Core Data -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Title & Basic Info -->
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          1. Thông tin tiêu đề & Định danh
+        </h3>
+
+        <div style="grid-template-columns: 1fr 1fr; display: grid; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+              Tiêu đề phim (Title) <span style="color: #ef4444;">*</span>
+            </label>
+            <input 
+              type="text" 
+              placeholder="ví dụ: a tale of King Kong"
+              style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.95rem; font-weight: 600;"
+            />
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+              Tiêu đề gốc / Tiếng Việt (Original Title)
+            </label>
+            <input 
+              type="text" 
+              placeholder="ví dụ: sự tích con khỉ"
+              style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.95rem;"
+            />
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Tiêu đề hiển thị đầy đủ (Display Title)
+          </label>
+          <input 
+            type="text" 
+            placeholder="ví dụ: a tale of King Kong | sự tích con khỉ"
+            style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.95rem;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Đường dẫn Slug (URL)
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #64748b; font-size: 0.9rem; font-family: monospace;">/films/</span>
+            <input 
+              type="text" 
+              placeholder="ten-phim-moi"
+              style="flex: 1; padding: 0.55rem 0.75rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; font-family: monospace;"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Synopsis -->
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          2. Tóm tắt nội dung phim (Synopsis)
+        </h3>
+        <textarea 
+          rows="5" 
+          placeholder="Nhập nội dung tóm tắt phim bằng tiếng Anh hoặc tiếng Việt..."
+          style="width: 100%; padding: 0.85rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; line-height: 1.6; color: #0f172a;"
+        ></textarea>
+      </div>
+
+      <!-- Stills Upload / URLs -->
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          3. Danh sách ảnh Stills (Mỗi dòng 1 đường dẫn)
+        </h3>
+        <textarea 
+          rows="4" 
+          placeholder="/images/films/ten-phim/still-01.png&#10;/images/films/ten-phim/still-02.png"
+          style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-family: monospace; font-size: 0.88rem;"
+        ></textarea>
+      </div>
+
+      <!-- Credits -->
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          4. Ekip thực hiện (Credits)
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1rem;">
+            <input type="text" value="Directed by" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;" />
+            <input type="text" value="Cầm Đức Hiệp" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;" />
+          </div>
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1rem;">
+            <input type="text" placeholder="Vai trò (e.g. Produced by)" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;" />
+            <input type="text" placeholder="Tên thành viên ekip" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          Phân loại & Xuất bản
+        </h3>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Thể loại (Category)
+          </label>
+          <select style="width: 100%; padding: 0.6rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; background: #fff;">
+            <option value="essay film">Essay film</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="documentary">Documentary</option>
+            <option value="fiction">Fiction</option>
+            <option value="experimental">Experimental</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Năm & Tiến độ
+          </label>
+          <input 
+            type="text" 
+            placeholder="e.g. 2026 hoặc 2027 - in developing"
+            style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem;"
+          />
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Thời lượng
+          </label>
+          <input 
+            type="text" 
+            placeholder="e.g. 15'"
+            style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem;"
+          />
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Quy cách kỹ thuật (Format)
+          </label>
+          <input 
+            type="text" 
+            placeholder="e.g. Fiction | 15' | 2024 | Vietnam"
+            style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.88rem;"
+          />
+        </div>
+
+        <button 
+          type="button" 
+          onclick="alert('Đã tạo phim mới thành công!')" 
+          class="btn btn-primary" 
+          style="width: 100%; justify-content: center; padding: 0.75rem;"
+        >
+          Lưu và hiển thị trên web
+        </button>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          Ảnh Thumbnail
+        </h3>
+        <input 
+          type="text" 
+          placeholder="/images/thumbnails/thumb-phim.png" 
+          style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem; font-family: monospace;"
+        />
+        <p style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.5rem;">
+          Tỉ lệ ảnh 16:9 sắc nét, dung lượng tối ưu dưới 2MB.
+        </p>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

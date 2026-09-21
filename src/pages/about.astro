@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+export const prerender = false;
+---
+
+<Layout title="About" activeNav="about">
+  <div style="max-width: 800px; display: flex; flex-direction: column; gap: 48px;">
+    <!-- Bio Text -->
+    <div style="font-size: 1.05rem; line-height: 1.8; color: #e2e8f0; font-weight: 400; display: flex; flex-direction: column; gap: 16px;">
+      <p>
+        Cầm Đức Hiệp (b. 2004) grew up in a small town in the mountainous region of Northern Vietnam.
+      </p>
+      <p>
+        His works often bend genres and experiment with narrative structures to open up dialogues about identity and freedom in a world without clear boundaries.
+      </p>
+    </div>
+
+    <!-- Contact & Location Info -->
+    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; color: #94a3b8; padding-top: 16px;">
+      <div>Moc Chau, Vietnam</div>
+      <div>
+        <a 
+          href="mailto:camduchiep1908@gmail.com" 
+          style="color: #ffffff; text-decoration: underline; text-underline-offset: 4px; transition: opacity 0.2s;"
+          onmouseover="this.style.opacity='0.8';"
+          onmouseout="this.style.opacity='1';"
+        >
+          camduchiep1908@gmail.com
+        </a>
+      </div>
+      <div>
+        <a 
+          href="tel:+84852867917" 
+          style="color: #94a3b8; text-decoration: none; transition: color 0.2s;"
+          onmouseover="this.style.color='#ffffff';"
+          onmouseout="this.style.color='#94a3b8';"
+        >
+          (+84)852867917
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

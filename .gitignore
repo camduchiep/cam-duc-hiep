@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # Cloudflare local database cache
 .wrangler/
+
+# Temporary reference renders
+ref/pages/

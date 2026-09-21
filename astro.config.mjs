@@ -7,5 +7,10 @@ export default defineConfig({
     platformProxy: {
       enabled: true
     }
-  })
+  }),
+  vite: {
+    ssr: {
+      external: ['node:fs/promises', 'node:path']
+    }
+  }
 });

@@ -1,7 +1,7 @@
 ---
 interface Props {
   title: string;
-  activeTab?: 'films' | 'new-film' | 'posts' | 'new-post';
+  activeTab?: 'films' | 'new-film' | 'posts' | 'new-post' | 'about' | 'cv';
 }
 
 const { title, activeTab = 'films' } = Astro.props;
@@ -85,25 +85,6 @@ const { title, activeTab = 'films' } = Astro.props;
       .nav-link.active svg {
         stroke: #ffffff;
       }
-      /* Quill Editor Styling Override */
-      .ql-toolbar {
-        border-top-left-radius: 0.5rem;
-        border-top-right-radius: 0.5rem;
-        background: #f8fafc;
-        border-color: #cbd5e1 !important;
-      }
-      .ql-container {
-        border-bottom-left-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
-        min-height: 320px;
-        font-size: 1rem;
-        border-color: #cbd5e1 !important;
-        background: #ffffff;
-      }
-      .ql-editor {
-        min-height: 320px;
-        line-height: 1.65;
-      }
     </style>
   </head>
   <body>
@@ -156,6 +137,23 @@ const { title, activeTab = 'films' } = Astro.props;
             </nav>
           </div>
 
+          <!-- About & CV Section -->
+          <div>
+            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.08em; padding: 0 0.85rem; margin-bottom: 0.4rem;">
+              Giới thiệu & Hồ sơ
+            </div>
+            <nav style="display: flex; flex-direction: column; gap: 0.25rem;">
+              <a href="/admin/about" class={`nav-link ${activeTab === 'about' ? 'active' : ''}`}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Chỉnh sửa About
+              </a>
+              <a href="/admin/cv" class={`nav-link ${activeTab === 'cv' ? 'active' : ''}`}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                Chỉnh sửa CV
+              </a>
+            </nav>
+          </div>
+
           <!-- Posts Section -->
           <div>
             <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.08em; padding: 0 0.85rem; margin-bottom: 0.4rem;">
@@ -173,19 +171,19 @@ const { title, activeTab = 'films' } = Astro.props;
             </nav>
           </div>
 
-          <!-- External Links -->
+          <!-- Preview Links -->
           <div>
             <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.08em; padding: 0 0.85rem; margin-bottom: 0.4rem;">
-              Xem trang tĩnh
+              Xem trang ngoài web
             </div>
             <nav style="display: flex; flex-direction: column; gap: 0.25rem;">
               <a href="/about" target="_blank" class="nav-link">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Trang About ↗
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Trang About ngoài web ↗
               </a>
               <a href="/cv" target="_blank" class="nav-link">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                Trang CV ↗
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Trang CV ngoài web ↗
               </a>
             </nav>
           </div>

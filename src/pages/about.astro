@@ -1,44 +1,51 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getAboutData } from '../lib/content';
 
 export const prerender = false;
+
+const db = Astro.locals.runtime?.env?.DB;
+const about = await getAboutData(db);
 ---
 
 <Layout title="About" activeNav="about">
   <div style="max-width: 800px; display: flex; flex-direction: column; gap: 48px; background: #ffffff;">
     <!-- Bio Text -->
     <div style="font-size: 1.05rem; line-height: 1.8; color: #000000; font-weight: 400; display: flex; flex-direction: column; gap: 16px;">
-      <p>
-        Cầm Đức Hiệp (b. 2004) grew up in a small town in the mountainous region of Northern Vietnam.
-      </p>
-      <p>
-        His works often bend genres and experiment with narrative structures to open up dialogues about identity and freedom in a world without clear boundaries.
-      </p>
+      {about.bioParagraphs && about.bioParagraphs.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
     </div>
 
     <!-- Contact & Location Info -->
     <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; color: #000000; padding-top: 16px;">
-      <div style="opacity: 0.7;">Moc Chau, Vietnam</div>
-      <div>
-        <a 
-          href="mailto:camduchiep1908@gmail.com" 
-          style="color: #000000; text-decoration: underline; text-underline-offset: 4px; transition: opacity 0.2s;"
-          onmouseover="this.style.opacity='0.6';"
-          onmouseout="this.style.opacity='1';"
-        >
-          camduchiep1908@gmail.com
-        </a>
-      </div>
-      <div>
-        <a 
-          href="tel:+84852867917" 
-          style="color: #000000; opacity: 0.7; text-decoration: none; transition: opacity 0.2s;"
-          onmouseover="this.style.opacity='1';"
-          onmouseout="this.style.opacity='0.7';"
-        >
-          (+84)852867917
-        </a>
-      </div>
+      {about.location && (
+        <div style="opacity: 0.7;">{about.location}</div>
+      )}
+      {about.email && (
+        <div>
+          <a 
+            href={`mailto:${about.email}`} 
+            style="color: #000000; text-decoration: underline; text-underline-offset: 4px; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity='0.6';"
+            onmouseout="this.style.opacity='1';"
+          >
+            {about.email}
+          </a>
+        </div>
+      )}
+      {about.phone && (
+        <div>
+          <a 
+            href={`tel:${about.phone.replace(/[^0-9+]/g, '')}`} 
+            style="color: #000000; opacity: 0.7; text-decoration: none; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity='1';"
+            onmouseout="this.style.opacity='0.7';"
+          >
+            {about.phone}
+          </a>
+        </div>
+      )}
     </div>
   </div>
 </Layout>

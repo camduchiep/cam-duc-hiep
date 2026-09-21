@@ -1,0 +1,407 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getCVData } from '../../lib/content';
+
+export const prerender = false;
+
+const db = Astro.locals.runtime?.env?.DB;
+const cv = await getCVData(db);
+---
+
+<AdminLayout title="Chỉnh sửa CV" activeTab="cv">
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <a href="/admin" style="color: #64748b; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+        ← Quay lại trang quản trị
+      </a>
+      <h1 style="font-size: 1.85rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem; letter-spacing: -0.01em;">
+        Chỉnh sửa Hồ sơ năng lực (CV)
+      </h1>
+      <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.25rem;">
+        Cập nhật các mục Tài trợ (Grant), Hội thảo (Workshop), Học vấn (Education) và Lịch chiếu phim (Selected screening) hiển thị tại <code>/cv</code>.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="/cv" target="_blank" class="btn btn-outline">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Xem trang CV ↗
+      </a>
+      <button type="button" id="save-cv-btn" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Lưu thay đổi
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div id="cv-status-banner" style="display: none; padding: 1rem 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; font-weight: 500;"></div>
+
+  <!-- Editor & Live Preview Grid -->
+  <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 2rem; align-items: start;">
+    <!-- Left Column: Form Controls -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Grants Section -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            1. Tài trợ & Quỹ (Grant)
+          </h3>
+          <button type="button" id="add-grant-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
+            + Thêm dòng
+          </button>
+        </div>
+        <div id="grants-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Items will be populated by script -->
+        </div>
+      </div>
+
+      <!-- Workshops Section -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            2. Hội thảo & Khóa học (Workshop)
+          </h3>
+          <button type="button" id="add-workshop-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
+            + Thêm dòng
+          </button>
+        </div>
+        <div id="workshops-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Items will be populated by script -->
+        </div>
+      </div>
+
+      <!-- Education Section -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            3. Học vấn (Education)
+          </h3>
+          <button type="button" id="add-education-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
+            + Thêm dòng
+          </button>
+        </div>
+        <div id="education-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Items will be populated by script -->
+        </div>
+      </div>
+
+      <!-- Selected Screenings Section -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            4. Chiếu phim & Triển lãm (Selected screening)
+          </h3>
+        </div>
+        <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 0.75rem;">
+          Nhập mỗi sự kiện chiếu phim trên một dòng (Ví dụ: <code>Atelier Varan, Paris, 2026</code>).
+        </p>
+        <textarea 
+          id="screenings-text"
+          rows="6"
+          style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; line-height: 1.6;"
+          placeholder="Atelier Varan, Paris, 2026&#10;Queer Museum, Hanoi, 2025"
+        >{cv.screenings ? cv.screenings.join('\n') : ''}</textarea>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Preview -->
+    <div style="position: sticky; top: 80px;">
+      <div class="card" style="background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+          <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8;">
+            👁 Xem trước trực tiếp (Live Preview)
+          </span>
+          <span style="font-size: 0.78rem; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+            Chuẩn giao diện /cv
+          </span>
+        </div>
+
+        <!-- Render exactly as /cv -->
+        <div id="cv-preview" style="display: flex; flex-direction: column; gap: 32px; background: #ffffff;">
+          <!-- Will be filled by live JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw initial data for JS -->
+  <div id="raw-cv-data" style="display: none;" data-cv={JSON.stringify(cv)}></div>
+
+  <script>
+    const rawDataElem = document.getElementById('raw-cv-data') as HTMLDivElement;
+    const initialCV = JSON.parse(rawDataElem.getAttribute('data-cv') || '{}');
+
+    let state = {
+      grants: initialCV.grants || [],
+      workshops: initialCV.workshops || [],
+      education: initialCV.education || [],
+      screenings: initialCV.screenings || []
+    };
+
+    const grantsContainer = document.getElementById('grants-container') as HTMLDivElement;
+    const workshopsContainer = document.getElementById('workshops-container') as HTMLDivElement;
+    const educationContainer = document.getElementById('education-container') as HTMLDivElement;
+    const screeningsText = document.getElementById('screenings-text') as HTMLTextAreaElement;
+    const previewContainer = document.getElementById('cv-preview') as HTMLDivElement;
+    const saveBtn = document.getElementById('save-cv-btn') as HTMLButtonElement;
+    const statusBanner = document.getElementById('cv-status-banner') as HTMLDivElement;
+
+    function renderGrantsInputs() {
+      grantsContainer.innerHTML = '';
+      state.grants.forEach((grant: any, idx: number) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: grid; grid-template-columns: 1fr 2fr 36px; gap: 0.5rem; align-items: center;';
+        row.innerHTML = `
+          <input type="text" placeholder="Tiêu đề (Grant)" value="${grant.title || ''}" class="grant-title" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <input type="text" placeholder="Chi tiết (Tổ chức, năm...)" value="${grant.details || ''}" class="grant-details" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <button type="button" class="del-grant btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
+        `;
+        grantsContainer.appendChild(row);
+      });
+
+      // Events
+      grantsContainer.querySelectorAll('.grant-title').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.grants[e.target.dataset.idx].title = e.target.value;
+          updateLivePreview();
+        });
+      });
+      grantsContainer.querySelectorAll('.grant-details').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.grants[e.target.dataset.idx].details = e.target.value;
+          updateLivePreview();
+        });
+      });
+      grantsContainer.querySelectorAll('.del-grant').forEach(btn => {
+        btn.addEventListener('click', (e: any) => {
+          state.grants.splice(e.target.dataset.idx, 1);
+          renderGrantsInputs();
+          updateLivePreview();
+        });
+      });
+    }
+
+    function renderWorkshopsInputs() {
+      workshopsContainer.innerHTML = '';
+      state.workshops.forEach((ws: any, idx: number) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: grid; grid-template-columns: 1.5fr 1.5fr 36px; gap: 0.5rem; align-items: center;';
+        row.innerHTML = `
+          <input type="text" placeholder="Tên Workshop" value="${ws.title || ''}" class="ws-title" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <input type="text" placeholder="Tổ chức / Năm" value="${ws.details || ''}" class="ws-details" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <button type="button" class="del-ws btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
+        `;
+        workshopsContainer.appendChild(row);
+      });
+
+      workshopsContainer.querySelectorAll('.ws-title').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.workshops[e.target.dataset.idx].title = e.target.value;
+          updateLivePreview();
+        });
+      });
+      workshopsContainer.querySelectorAll('.ws-details').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.workshops[e.target.dataset.idx].details = e.target.value;
+          updateLivePreview();
+        });
+      });
+      workshopsContainer.querySelectorAll('.del-ws').forEach(btn => {
+        btn.addEventListener('click', (e: any) => {
+          state.workshops.splice(e.target.dataset.idx, 1);
+          renderWorkshopsInputs();
+          updateLivePreview();
+        });
+      });
+    }
+
+    function renderEducationInputs() {
+      educationContainer.innerHTML = '';
+      state.education.forEach((edu: any, idx: number) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: grid; grid-template-columns: 1.5fr 1.5fr 36px; gap: 0.5rem; align-items: center;';
+        row.innerHTML = `
+          <input type="text" placeholder="Bằng cấp (Degree)" value="${edu.degree || ''}" class="edu-degree" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <input type="text" placeholder="Trường / Cơ sở đào tạo" value="${edu.institution || ''}" class="edu-inst" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
+          <button type="button" class="del-edu btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
+        `;
+        educationContainer.appendChild(row);
+      });
+
+      educationContainer.querySelectorAll('.edu-degree').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.education[e.target.dataset.idx].degree = e.target.value;
+          updateLivePreview();
+        });
+      });
+      educationContainer.querySelectorAll('.edu-inst').forEach(input => {
+        input.addEventListener('input', (e: any) => {
+          state.education[e.target.dataset.idx].institution = e.target.value;
+          updateLivePreview();
+        });
+      });
+      educationContainer.querySelectorAll('.del-edu').forEach(btn => {
+        btn.addEventListener('click', (e: any) => {
+          state.education.splice(e.target.dataset.idx, 1);
+          renderEducationInputs();
+          updateLivePreview();
+        });
+      });
+    }
+
+    function updateLivePreview() {
+      // Screenings from textarea
+      const screenings = screeningsText.value
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      state.screenings = screenings;
+
+      let html = '';
+
+      // Grant
+      if (state.grants && state.grants.length > 0) {
+        html += `
+          <section style="display: flex; flex-direction: column; gap: 8px;">
+            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Grant</h2>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${state.grants.map((g: any) => `
+                <div style="font-size: 0.92rem; color: #000000; opacity: 0.7; line-height: 1.6;">
+                  ${g.details ? `${g.title && g.title !== 'Grant' ? `<span style="font-weight: 500; opacity: 1; color: #000;">${g.title}: </span>` : ''}${g.details}` : g.title}
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      // Workshop
+      if (state.workshops && state.workshops.length > 0) {
+        html += `
+          <section style="display: flex; flex-direction: column; gap: 14px;">
+            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Workshop</h2>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.92rem; line-height: 1.6;">
+              ${state.workshops.map((ws: any) => `
+                <div>
+                  <div style="color: #000000; font-weight: 500;">${ws.title}</div>
+                  ${ws.details ? `<div style="color: #000000; opacity: 0.7;">${ws.details}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      // Education
+      if (state.education && state.education.length > 0) {
+        html += `
+          <section style="display: flex; flex-direction: column; gap: 8px;">
+            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Education</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; line-height: 1.6;">
+              ${state.education.map((edu: any) => `
+                <div>
+                  <div style="color: #000000; font-weight: 500;">${edu.degree}</div>
+                  ${edu.institution ? `<div style="color: #000000; opacity: 0.7;">${edu.institution}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      // Screenings
+      if (screenings.length > 0) {
+        html += `
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Selected screening</h2>
+            <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; color: #000000; opacity: 0.7; line-height: 1.6; margin: 0;">
+              ${screenings.map(sc => `<li>${sc}</li>`).join('')}
+            </ul>
+          </section>
+        `;
+      }
+
+      previewContainer.innerHTML = html;
+    }
+
+    // Add row buttons
+    document.getElementById('add-grant-btn')?.addEventListener('click', () => {
+      state.grants.push({ title: 'Grant', details: '' });
+      renderGrantsInputs();
+      updateLivePreview();
+    });
+
+    document.getElementById('add-workshop-btn')?.addEventListener('click', () => {
+      state.workshops.push({ title: '', details: '' });
+      renderWorkshopsInputs();
+      updateLivePreview();
+    });
+
+    document.getElementById('add-education-btn')?.addEventListener('click', () => {
+      state.education.push({ degree: '', institution: '' });
+      renderEducationInputs();
+      updateLivePreview();
+    });
+
+    screeningsText.addEventListener('input', updateLivePreview);
+
+    // Initial render
+    renderGrantsInputs();
+    renderWorkshopsInputs();
+    renderEducationInputs();
+    updateLivePreview();
+
+    // Save Action
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Đang lưu...';
+      statusBanner.style.display = 'none';
+
+      const payload = {
+        grants: state.grants.filter((g: any) => g.title || g.details),
+        workshops: state.workshops.filter((w: any) => w.title || w.details),
+        education: state.education.filter((e: any) => e.degree || e.institution),
+        screenings: screeningsText.value
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s.length > 0)
+      };
+
+      try {
+        const res = await fetch('/api/content/cv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          statusBanner.style.display = 'block';
+          statusBanner.style.background = '#dcfce7';
+          statusBanner.style.color = '#166534';
+          statusBanner.style.border = '1px solid #bbf7d0';
+          statusBanner.innerText = '✓ Đã lưu thành công! Dữ liệu hồ sơ CV đã được cập nhật.';
+        } else {
+          statusBanner.style.display = 'block';
+          statusBanner.style.background = '#fee2e2';
+          statusBanner.style.color = '#991b1b';
+          statusBanner.style.border = '1px solid #ef4444';
+          statusBanner.innerText = data.error || 'Có lỗi xảy ra khi lưu.';
+        }
+      } catch (err) {
+        statusBanner.style.display = 'block';
+        statusBanner.style.background = '#fee2e2';
+        statusBanner.style.color = '#991b1b';
+        statusBanner.style.border = '1px solid #ef4444';
+        statusBanner.innerText = 'Lỗi kết nối máy chủ.';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Lưu thay đổi
+        `;
+      }
+    });
+  </script>
+</AdminLayout>

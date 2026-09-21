@@ -1,0 +1,29 @@
+{
+  "grants": [
+    {
+      "title": "Grant",
+      "details": "CJ Short Film Project, CJ Cultural Foundation & CJ CGV Vietnam, 2025"
+    }
+  ],
+  "workshops": [
+    {
+      "title": "KAFA Training program",
+      "details": "Korean Academy of Film Arts, HCMC, 2025"
+    },
+    {
+      "title": "Direct cinema workshop, Trần Phương Thảo & Swann Dubus",
+      "details": "Varan Vietnam, Hanoi, 2024"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Art in Film Directing",
+      "institution": "Hanoi Academy of Theater and Cinema"
+    }
+  ],
+  "screenings": [
+    "Atelier Varan, Paris, 2026",
+    "Queer Museum, Hanoi, 2025",
+    "Konima Cinema, KONIMA 11, HCMC, 2025"
+  ]
+}

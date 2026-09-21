@@ -10,16 +10,16 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
 ---
 
 <Layout title="Films">
-  <div style="display: flex; flex-direction: column; gap: 50px; width: 100%;">
+  <div style="display: flex; flex-direction: column; gap: 50px; width: 100%; background: #ffffff;">
     <!-- Top Row: 2 large cards -->
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
       {topRowFilms.map((film) => (
         <a 
           href={`/films/${film.slug}`} 
-          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s;"
+          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
           class="film-card"
         >
-          <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #f8f8f8; margin-bottom: 14px;">
+          <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #ffffff; margin-bottom: 14px;">
             <img 
               src={film.thumbnail} 
               alt={film.title} 
@@ -32,7 +32,7 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
             <h2 style="font-size: 1.05rem; font-weight: 500; color: #000000; letter-spacing: -0.01em;">
               {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
             </h2>
-            <p style="font-size: 0.88rem; color: #666666; font-weight: 400;">
+            <p style="font-size: 0.88rem; color: #000000; opacity: 0.55; font-weight: 400;">
               {film.category} | {film.year}
             </p>
           </div>
@@ -45,10 +45,10 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
       {bottomRowFilms.map((film) => (
         <a 
           href={`/films/${film.slug}`} 
-          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s;"
+          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
           class="film-card"
         >
-          <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #f8f8f8; margin-bottom: 14px;">
+          <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #ffffff; margin-bottom: 14px;">
             <img 
               src={film.thumbnail} 
               alt={film.title} 
@@ -61,7 +61,7 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
             <h2 style="font-size: 1.02rem; font-weight: 500; color: #000000; letter-spacing: -0.01em;">
               {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
             </h2>
-            <p style="font-size: 0.86rem; color: #666666; font-weight: 400;">
+            <p style="font-size: 0.86rem; color: #000000; opacity: 0.55; font-weight: 400;">
               {film.category} | {film.year}
             </p>
           </div>

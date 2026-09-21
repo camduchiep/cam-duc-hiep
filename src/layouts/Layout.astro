@@ -40,8 +40,6 @@ const currentPath = Astro.url.pathname;
         --font-serif: 'Fraunces', Georgia, serif;
         --color-bg: #ffffff;
         --color-text: #000000;
-        --color-muted: #666666;
-        --color-dim: #999999;
         --color-border: #f0f0f0;
       }
       * {
@@ -50,8 +48,8 @@ const currentPath = Astro.url.pathname;
         padding: 0;
       }
       html, body {
-        background-color: var(--color-bg);
-        color: var(--color-text);
+        background-color: #ffffff;
+        color: #000000;
         font-family: var(--font-sans);
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
@@ -59,7 +57,7 @@ const currentPath = Astro.url.pathname;
         line-height: 1.6;
       }
       a {
-        color: inherit;
+        color: #000000;
         text-decoration: none;
       }
       /* Clean minimal scrollbar */
@@ -71,24 +69,24 @@ const currentPath = Astro.url.pathname;
         background: #ffffff;
       }
       ::-webkit-scrollbar-thumb {
-        background: #e5e5e5;
+        background: #dddddd;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #cccccc;
+        background: #999999;
       }
     </style>
   </head>
   <body>
-    <div style="display: flex; min-height: 100vh; width: 100%;">
+    <div style="display: flex; min-height: 100vh; width: 100%; background: #ffffff;">
       <!-- Fixed Left Sidebar -->
-      <aside style="width: 280px; flex-shrink: 0; padding: 70px 40px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--color-border);">
+      <aside style="width: 280px; flex-shrink: 0; padding: 70px 40px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--color-border); background: #ffffff;">
         <nav style="display: flex; flex-direction: column;">
           <!-- Films Section Header -->
           <div style="margin-bottom: 0.75rem;">
             <a 
               href="/" 
-              style={`font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; transition: opacity 0.2s; ${currentPath === '/' ? 'color: #000000;' : 'color: #000000; opacity: 0.85;'}`}
+              style={`font-size: 1.05rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; transition: opacity 0.2s; ${currentPath === '/' ? 'opacity: 1;' : 'opacity: 0.8;'}`}
             >
               Films
             </a>
@@ -102,13 +100,13 @@ const currentPath = Astro.url.pathname;
                 <li>
                   <a 
                     href={`/films/${film.slug}`} 
-                    style={`font-size: 0.92rem; font-weight: 400; transition: all 0.2s ease; display: block; ${
+                    style={`font-size: 0.92rem; color: #000000; transition: opacity 0.2s ease; display: block; ${
                       isActive 
-                        ? 'color: #000000; font-weight: 600; opacity: 1;' 
-                        : 'color: var(--color-muted); opacity: 0.85;'
+                        ? 'font-weight: 600; opacity: 1;' 
+                        : 'font-weight: 400; opacity: 0.45;'
                     }`}
-                    onmouseover="this.style.color='#000000'; this.style.opacity='1';"
-                    onmouseout={isActive ? "this.style.color='#000000'; this.style.opacity='1';" : "this.style.color='var(--color-muted)'; this.style.opacity='0.85';"}
+                    onmouseover="this.style.opacity='1';"
+                    onmouseout={isActive ? "this.style.opacity='1';" : "this.style.opacity='0.45';"}
                   >
                     {film.title}
                   </a>
@@ -121,26 +119,26 @@ const currentPath = Astro.url.pathname;
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <a 
               href="/about" 
-              style={`font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; transition: all 0.2s ease; ${
+              style={`font-size: 1.05rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; transition: opacity 0.2s ease; ${
                 currentPath === '/about' 
-                  ? 'color: #000000; opacity: 1;' 
-                  : 'color: var(--color-muted); opacity: 0.85;'
+                  ? 'opacity: 1;' 
+                  : 'opacity: 0.45;'
               }`}
-              onmouseover="this.style.color='#000000'; this.style.opacity='1';"
-              onmouseout={currentPath === '/about' ? "this.style.color='#000000'; this.style.opacity='1';" : "this.style.color='var(--color-muted)'; this.style.opacity='0.85';"}
+              onmouseover="this.style.opacity='1';"
+              onmouseout={currentPath === '/about' ? "this.style.opacity='1';" : "this.style.opacity='0.45';"}
             >
               About
             </a>
 
             <a 
               href="/cv" 
-              style={`font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; transition: all 0.2s ease; ${
+              style={`font-size: 1.05rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; transition: opacity 0.2s ease; ${
                 currentPath === '/cv' 
-                  ? 'color: #000000; opacity: 1;' 
-                  : 'color: var(--color-muted); opacity: 0.85;'
+                  ? 'opacity: 1;' 
+                  : 'opacity: 0.45;'
               }`}
-              onmouseover="this.style.color='#000000'; this.style.opacity='1';"
-              onmouseout={currentPath === '/cv' ? "this.style.color='#000000'; this.style.opacity='1';" : "this.style.color='var(--color-muted)'; this.style.opacity='0.85';"}
+              onmouseover="this.style.opacity='1';"
+              onmouseout={currentPath === '/cv' ? "this.style.opacity='1';" : "this.style.opacity='0.45';"}
             >
               CV
             </a>
@@ -152,9 +150,9 @@ const currentPath = Astro.url.pathname;
           <a 
             href="/admin" 
             target="_blank" 
-            style="font-size: 0.75rem; color: #cccccc; transition: color 0.2s; text-decoration: none;"
-            onmouseover="this.style.color='#666666';"
-            onmouseout="this.style.color='#cccccc';"
+            style="font-size: 0.75rem; color: #000000; opacity: 0.25; transition: opacity 0.2s; text-decoration: none;"
+            onmouseover="this.style.opacity='0.7';"
+            onmouseout="this.style.opacity='0.25';"
           >
             ● Admin CMS
           </a>

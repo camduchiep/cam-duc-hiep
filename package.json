@@ -8,8 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "d1:init-local": "wrangler d1 execute cam-duc-hiep-db --local --file=./schema.sql",
-    "d1:init-remote": "wrangler d1 execute cam-duc-hiep-db --remote --file=./schema.sql"
+    "d1:init-local": "wrangler d1 execute cam-duc-hiep-db-test --local --file=./schema.sql",
+    "d1:init-remote": "wrangler d1 execute cam-duc-hiep-db-test --remote --file=./schema.sql"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.2.0",

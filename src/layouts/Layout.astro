@@ -80,7 +80,7 @@ const currentPath = Astro.url.pathname;
   <body>
     <div style="display: flex; min-height: 100vh; width: 100%; background: #ffffff;">
       <!-- Left Sidebar (No border, clean spacing) -->
-      <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; background: #ffffff;">
+      <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; background: #ffffff;">
         <nav style="display: flex; flex-direction: column;">
           <!-- Films Section Header: Khi được chọn (ở '/') thì MỜ ĐI (opacity 0.35), chưa chọn thì ĐẬM ĐEN (opacity 1) -->
           <div style="margin-bottom: 0.65rem;">
@@ -144,19 +144,6 @@ const currentPath = Astro.url.pathname;
             </a>
           </div>
         </nav>
-
-        <!-- Admin link -->
-        <div style="padding-top: 2rem;">
-          <a 
-            href="/admin" 
-            target="_blank" 
-            style="font-size: 0.75rem; color: #000000; opacity: 0.2; transition: opacity 0.2s; text-decoration: none !important;"
-            onmouseover="this.style.opacity='0.65';"
-            onmouseout="this.style.opacity='0.2';"
-          >
-            ● Admin CMS
-          </a>
-        </div>
       </aside>
 
       <!-- Main Content Area -->

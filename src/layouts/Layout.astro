@@ -38,6 +38,9 @@ const currentPath = Astro.url.pathname;
       :root {
         --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
         --font-serif: 'Fraunces', Georgia, serif;
+        --color-bg: #ffffff;
+        --color-text: #000000;
+        --color-muted: #666666;
       }
       * {
         box-sizing: border-box;
@@ -45,20 +48,19 @@ const currentPath = Astro.url.pathname;
         padding: 0;
       }
       html, body {
-        background-color: #ffffff !important;
-        color: #000000 !important;
+        background-color: #ffffff;
+        color: #000000;
         font-family: var(--font-sans);
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         line-height: 1.6;
       }
-      /* Triệt để bỏ gạch chân cho toàn bộ link */
-      a, a:hover, a:focus, a:visited {
+      a {
         color: #000000;
         text-decoration: none !important;
       }
-      /* Scrollbar */
+      /* Clean minimal scrollbar */
       ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -73,120 +75,38 @@ const currentPath = Astro.url.pathname;
       ::-webkit-scrollbar-thumb:hover {
         background: #bbbbbb;
       }
-
-      .site-layout {
-        display: flex;
-        flex-direction: row;
-        min-height: 100vh;
-        width: 100%;
-        background-color: #ffffff;
-      }
-
-      .site-sidebar {
-        width: 250px;
-        flex-shrink: 0;
-        padding: 75px 30px 75px 70px;
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background-color: #ffffff;
-      }
-
-      .site-main {
-        flex: 1;
-        min-width: 0;
-        padding: 75px 60px 100px 30px;
-        background-color: #ffffff;
-      }
-
-      /* Quy tắc UX: Chưa chọn thì ĐEN RÕ, Khi được chọn thì MỜ ĐI */
-      .nav-heading {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #000000 !important;
-        letter-spacing: -0.01em;
-        text-decoration: none !important;
-        display: block;
-        transition: opacity 0.2s ease;
-        opacity: 1; /* Bình thường đen rõ */
-      }
-      .nav-heading.is-active {
-        opacity: 0.35 !important; /* Khi chọn: mờ đi */
-      }
-      .nav-heading:hover {
-        opacity: 0.65;
-      }
-
-      .film-nav-list {
-        list-style: none !important;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding-left: 0 !important;
-        margin: 0.65rem 0 2.25rem 0 !important;
-      }
-
-      .film-nav-item {
-        font-size: 0.92rem;
-        font-weight: 400;
-        color: #000000 !important;
-        text-decoration: none !important;
-        display: block;
-        transition: opacity 0.2s ease;
-        opacity: 1; /* Bình thường đen rõ */
-      }
-      .film-nav-item.is-active {
-        opacity: 0.35 !important; /* Khi chọn: mờ đi */
-      }
-      .film-nav-item:hover {
-        opacity: 0.65;
-      }
-
-      /* Chỉ gập layout sang 1 cột khi màn hình thực sự nhỏ (mobile < 680px) */
-      @media (max-width: 680px) {
-        .site-layout {
-          flex-direction: column !important;
-        }
-        .site-sidebar {
-          width: 100% !important;
-          height: auto !important;
-          position: static !important;
-          padding: 30px 24px !important;
-        }
-        .site-main {
-          padding: 24px 20px 60px !important;
-        }
-      }
     </style>
   </head>
   <body>
-    <div class="site-layout">
-      <!-- Cột trái: Sidebar Navigation -->
-      <aside class="site-sidebar">
+    <div style="display: flex; min-height: 100vh; width: 100%; background: #ffffff;">
+      <!-- Left Sidebar (No border, clean spacing) -->
+      <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; background: #ffffff;">
         <nav style="display: flex; flex-direction: column;">
-          <!-- Mục Films -->
-          <div>
+          <!-- Films Section Header: Khi được chọn (ở '/') thì MỜ ĐI (opacity 0.35), chưa chọn thì ĐẬM ĐEN (opacity 1) -->
+          <div style="margin-bottom: 0.65rem;">
             <a 
               href="/" 
-              class={`nav-heading ${currentPath === '/' ? 'is-active' : ''}`}
+              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.2s; ${currentPath === '/' ? 'opacity: 0.35;' : 'opacity: 1;'}`}
             >
               Films
             </a>
           </div>
 
-          <!-- Danh sách 5 phim -->
-          <ul class="film-nav-list">
+          <!-- Film Submenu: Khi ĐƯỢC CHỌN (isActive) -> MỜ ĐI (opacity: 0.35, font-weight: 400). Khi CHƯA CHỌN -> ĐẬM ĐEN (opacity: 1, font-weight: 500) -->
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0; margin-bottom: 2.25rem;">
             {films.map((film) => {
               const isActive = currentPath === `/films/${film.slug}`;
               return (
                 <li>
                   <a 
                     href={`/films/${film.slug}`} 
-                    class={`film-nav-item ${isActive ? 'is-active' : ''}`}
+                    style={`font-size: 0.92rem; text-decoration: none !important; transition: opacity 0.15s ease; display: block; ${
+                      isActive 
+                        ? 'color: #000000; opacity: 0.35; font-weight: 400;' 
+                        : 'color: #000000; opacity: 1; font-weight: 500;'
+                    }`}
+                    onmouseover="this.style.opacity='0.65';"
+                    onmouseout={isActive ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
                   >
                     {film.title}
                   </a>
@@ -195,18 +115,30 @@ const currentPath = Astro.url.pathname;
             })}
           </ul>
 
-          <!-- Mục About & CV -->
+          <!-- About & CV Links: Khi được chọn thì MỜ ĐI, chưa chọn thì ĐẬM ĐEN -->
           <div style="display: flex; flex-direction: column; gap: 0.65rem;">
             <a 
               href="/about" 
-              class={`nav-heading ${currentPath === '/about' ? 'is-active' : ''}`}
+              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.15s ease; ${
+                currentPath === '/about' 
+                  ? 'opacity: 0.35;' 
+                  : 'opacity: 1;'
+              }`}
+              onmouseover="this.style.opacity='0.65';"
+              onmouseout={currentPath === '/about' ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
             >
               About
             </a>
 
             <a 
               href="/cv" 
-              class={`nav-heading ${currentPath === '/cv' ? 'is-active' : ''}`}
+              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.15s ease; ${
+                currentPath === '/cv' 
+                  ? 'opacity: 0.35;' 
+                  : 'opacity: 1;'
+              }`}
+              onmouseover="this.style.opacity='0.65';"
+              onmouseout={currentPath === '/cv' ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
             >
               CV
             </a>
@@ -218,8 +150,8 @@ const currentPath = Astro.url.pathname;
           <a 
             href="/admin" 
             target="_blank" 
-            style="font-size: 0.75rem; color: #000000; opacity: 0.2; text-decoration: none !important; transition: opacity 0.2s;"
-            onmouseover="this.style.opacity='0.6';"
+            style="font-size: 0.75rem; color: #000000; opacity: 0.2; transition: opacity 0.2s; text-decoration: none !important;"
+            onmouseover="this.style.opacity='0.65';"
             onmouseout="this.style.opacity='0.2';"
           >
             ● Admin CMS
@@ -227,8 +159,8 @@ const currentPath = Astro.url.pathname;
         </div>
       </aside>
 
-      <!-- Khung nội dung chính -->
-      <main class="site-main">
+      <!-- Main Content Area -->
+      <main style="flex: 1; min-width: 0; padding: 75px 60px 100px 30px; background: #ffffff;">
         <slot />
       </main>
     </div>

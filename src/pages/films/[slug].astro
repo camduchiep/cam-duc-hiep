@@ -13,9 +13,9 @@ if (!film) {
 ---
 
 <Layout title={film.title} activeSlug={film.slug}>
-  <div class="film-container" style="display: flex; align-items: flex-start; gap: 75px; width: 100%;">
-    <!-- Main Column: Title, Format, Synopsis, Stills -->
-    <div style="max-width: 650px; width: 100%; display: flex; flex-direction: column;">
+  <div class="film-container" style="display: flex; align-items: flex-start; gap: clamp(80px, 7vw, 120px); width: 100%;">
+    <!-- Main Column (Yellow Box): Title, Format, Synopsis, Stills - Expanded Width -->
+    <div class="film-content-col" style="max-width: 840px; width: 100%; display: flex; flex-direction: column;">
       <!-- Title -->
       <h1 style="font-family: var(--font-serif); font-size: 1.85rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
         {film.displayTitle}
@@ -28,12 +28,12 @@ if (!film) {
 
       <!-- Synopsis -->
       {film.synopsis && (
-        <p style="font-size: 0.95rem; color: #000000; line-height: 1.55; margin-bottom: 32px; white-space: pre-line;">
+        <p style="font-size: 0.95rem; color: #000000; line-height: 1.6; margin-bottom: 32px; white-space: pre-line;">
           {film.synopsis}
         </p>
       )}
 
-      <!-- Stills Gallery (Stacked directly below synopsis, minimal gap) -->
+      <!-- Stills Gallery (Stacked directly below synopsis, expanded to full content width) -->
       {film.stills && film.stills.length > 0 && (
         <div style="display: flex; flex-direction: column; gap: 2px; width: 100%;">
           {film.stills.map((still, idx) => (
@@ -48,7 +48,7 @@ if (!film) {
       )}
     </div>
 
-    <!-- Right Column: Production Credits (Đoàn làm phim) -->
+    <!-- Right Column (Red Box): Production Credits - Shifted to the right -->
     {film.credits && film.credits.length > 0 && (
       <aside class="film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px;">
         {film.credits.map((credit) => (

@@ -13,35 +13,35 @@ if (!film) {
 ---
 
 <Layout title={film.title} activeSlug={film.slug}>
-  <div class="film-container" style="display: flex; align-items: flex-start; gap: 75px; width: 100%;">
+  <div class="film-container">
     <!-- Main Column: Title, Format, Synopsis, Stills -->
-    <div style="max-width: 650px; width: 100%; display: flex; flex-direction: column;">
+    <div class="film-content-col">
       <!-- Title -->
-      <h1 style="font-family: var(--font-serif); font-size: 1.85rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
+      <h1 class="film-title">
         {film.displayTitle}
       </h1>
 
       <!-- Format / Metadata -->
-      <p style="font-size: 0.92rem; color: #000000; margin-bottom: 24px;">
+      <p class="film-format">
         {film.format}
       </p>
 
       <!-- Synopsis -->
       {film.synopsis && (
-        <p style="font-size: 0.95rem; color: #000000; line-height: 1.55; margin-bottom: 32px; white-space: pre-line;">
+        <p class="film-synopsis">
           {film.synopsis}
         </p>
       )}
 
-      <!-- Stills Gallery (Stacked directly below synopsis, minimal gap) -->
+      <!-- Stills Gallery (Stacked seamlessly matching screenshot) -->
       {film.stills && film.stills.length > 0 && (
-        <div style="display: flex; flex-direction: column; gap: 2px; width: 100%;">
+        <div class="film-stills">
           {film.stills.map((still, idx) => (
             <img 
               src={still} 
               alt={`${film.title} still ${idx + 1}`} 
               loading={idx === 0 ? "eager" : "lazy"}
-              style="width: 100%; height: auto; display: block;"
+              class="film-still-img"
             />
           ))}
         </div>
@@ -50,14 +50,14 @@ if (!film) {
 
     <!-- Right Column: Production Credits (Đoàn làm phim) -->
     {film.credits && film.credits.length > 0 && (
-      <aside class="film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px;">
+      <aside class="film-credits-col">
         {film.credits.map((credit) => (
-          <div style="display: flex; flex-direction: column; gap: 1px;">
-            <div style="font-size: 0.88rem; color: #666666; font-weight: 400;">
+          <div class="credit-item">
+            <div class="credit-role">
               {credit.role}
             </div>
             {credit.names.map((name) => (
-              <div style="font-size: 0.92rem; color: #000000; font-weight: 400;">
+              <div class="credit-name">
                 {name}
               </div>
             ))}
@@ -68,14 +68,97 @@ if (!film) {
   </div>
 
   <style>
-    @media (max-width: 1100px) {
+    .film-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 60px;
+      width: 100%;
+      background-color: #ffffff;
+    }
+
+    .film-content-col {
+      max-width: 650px;
+      width: 100%;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .film-title {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      font-weight: 400;
+      color: #000000;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .film-format {
+      font-size: 0.92rem;
+      color: #000000;
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+
+    .film-synopsis {
+      font-size: 0.95rem;
+      color: #000000;
+      line-height: 1.55;
+      margin-bottom: 32px;
+      white-space: pre-line;
+      font-weight: 400;
+    }
+
+    .film-stills {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+      width: 100%;
+    }
+
+    .film-still-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .film-credits-col {
+      width: 250px;
+      flex-shrink: 0;
+      padding-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .credit-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .credit-role {
+      font-size: 0.88rem;
+      color: #666666;
+      font-weight: 400;
+    }
+
+    .credit-name {
+      font-size: 0.92rem;
+      color: #000000;
+      font-weight: 400;
+    }
+
+    @media (max-width: 820px) {
       .film-container {
         flex-direction: column !important;
-        gap: 40px !important;
+        gap: 36px !important;
       }
-      .film-credits {
+      .film-credits-col {
         width: 100% !important;
-        order: 2;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 24px;
       }
     }
   </style>

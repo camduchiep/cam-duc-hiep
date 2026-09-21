@@ -16,10 +16,10 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
       {topRowFilms.map((film) => (
         <a 
           href={`/films/${film.slug}`} 
-          style="display: flex; flex-direction: column; text-decoration: none; group; transition: opacity 0.25s;"
+          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s;"
           class="film-card"
         >
-          <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #111111; margin-bottom: 14px;">
+          <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #f8f8f8; margin-bottom: 14px;">
             <img 
               src={film.thumbnail} 
               alt={film.title} 
@@ -29,10 +29,10 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
             />
           </div>
           <div style="display: flex; flex-direction: column; gap: 2px;">
-            <h2 style="font-size: 1.05rem; font-weight: 500; color: #ffffff; letter-spacing: -0.01em;">
+            <h2 style="font-size: 1.05rem; font-weight: 500; color: #000000; letter-spacing: -0.01em;">
               {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
             </h2>
-            <p style="font-size: 0.88rem; color: #888888; font-weight: 400;">
+            <p style="font-size: 0.88rem; color: #666666; font-weight: 400;">
               {film.category} | {film.year}
             </p>
           </div>
@@ -48,7 +48,7 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
           style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s;"
           class="film-card"
         >
-          <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #111111; margin-bottom: 14px;">
+          <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #f8f8f8; margin-bottom: 14px;">
             <img 
               src={film.thumbnail} 
               alt={film.title} 
@@ -58,10 +58,10 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
             />
           </div>
           <div style="display: flex; flex-direction: column; gap: 2px;">
-            <h2 style="font-size: 1.02rem; font-weight: 500; color: #ffffff; letter-spacing: -0.01em;">
+            <h2 style="font-size: 1.02rem; font-weight: 500; color: #000000; letter-spacing: -0.01em;">
               {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
             </h2>
-            <p style="font-size: 0.86rem; color: #888888; font-weight: 400;">
+            <p style="font-size: 0.86rem; color: #666666; font-weight: 400;">
               {film.category} | {film.year}
             </p>
           </div>
@@ -73,7 +73,7 @@ const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối
   <style>
     .film-card:hover .film-thumb {
       transform: scale(1.02);
-      opacity: 0.9;
+      opacity: 0.92;
     }
     @media (max-width: 900px) {
       div[style*="grid-template-columns: repeat(2"] {

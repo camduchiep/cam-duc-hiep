@@ -24,19 +24,19 @@ const nextFilm = currentIndex < films.length - 1 ? films[currentIndex + 1] : nul
       <!-- Title & Main Director/Credit Row -->
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px;">
         <div>
-          <h1 style="font-family: var(--font-serif); font-size: 1.65rem; font-weight: 400; color: #ffffff; letter-spacing: -0.01em; line-height: 1.3;">
+          <h1 style="font-family: var(--font-serif); font-size: 1.65rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.3;">
             {film.displayTitle}
           </h1>
           <!-- Format / Metadata Line -->
-          <p style="font-size: 0.92rem; color: #888888; margin-top: 6px; font-weight: 400;">
+          <p style="font-size: 0.92rem; color: #666666; margin-top: 6px; font-weight: 400;">
             {film.format}
           </p>
         </div>
 
         {film.credits.length > 0 && film.credits[0] && (
           <div style="text-align: right; min-width: 160px;">
-            <div style="font-size: 0.85rem; color: #888888;">{film.credits[0].role}</div>
-            <div style="font-size: 0.95rem; color: #ffffff; font-weight: 500;">{film.credits[0].name}</div>
+            <div style="font-size: 0.85rem; color: #777777;">{film.credits[0].role}</div>
+            <div style="font-size: 0.95rem; color: #000000; font-weight: 500;">{film.credits[0].name}</div>
           </div>
         )}
       </div>
@@ -44,20 +44,20 @@ const nextFilm = currentIndex < films.length - 1 ? films[currentIndex + 1] : nul
       <!-- Synopsis -->
       {film.synopsis && (
         <div style="max-width: 860px; margin-top: 12px;">
-          <p style="font-size: 0.95rem; color: #cccccc; line-height: 1.7; white-space: pre-line; font-weight: 400;">
+          <p style="font-size: 0.95rem; color: #222222; line-height: 1.7; white-space: pre-line; font-weight: 400;">
             {film.synopsis}
           </p>
         </div>
       )}
 
-      <!-- Full Production Credits (Collapsible or Clean Grid) -->
+      <!-- Full Production Credits -->
       {film.credits.length > 1 && (
-        <div style="margin-top: 18px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); max-width: 860px;">
+        <div style="margin-top: 18px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.08); max-width: 860px;">
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px 24px; font-size: 0.86rem;">
             {film.credits.slice(1).map((credit) => (
               <div>
                 <span style="color: #777777; display: block; font-size: 0.8rem;">{credit.role}</span>
-                <span style="color: #dddddd; font-weight: 400;">{credit.name}</span>
+                <span style="color: #111111; font-weight: 400;">{credit.name}</span>
               </div>
             ))}
           </div>
@@ -65,11 +65,11 @@ const nextFilm = currentIndex < films.length - 1 ? films[currentIndex + 1] : nul
       )}
     </header>
 
-    <!-- Film Stills Gallery (Stacked Vertically with Cinematic Breathing Room) -->
+    <!-- Film Stills Gallery -->
     {film.stills && film.stills.length > 0 && (
       <section style="display: flex; flex-direction: column; gap: 40px; margin-top: 20px;">
         {film.stills.map((still, idx) => (
-          <div style="width: 100%; overflow: hidden; background: #0a0a0a; border-radius: 2px;">
+          <div style="width: 100%; overflow: hidden; background: #fafafa; border-radius: 2px;">
             <img 
               src={still} 
               alt={`${film.title} still ${idx + 1}`} 
@@ -82,13 +82,13 @@ const nextFilm = currentIndex < films.length - 1 ? films[currentIndex + 1] : nul
     )}
 
     <!-- Bottom Prev / Next Navigation -->
-    <footer style="display: flex; justify-content: space-between; align-items: center; padding-top: 40px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem;">
+    <footer style="display: flex; justify-content: space-between; align-items: center; padding-top: 40px; margin-top: 20px; border-top: 1px solid rgba(0,0,0,0.08); font-size: 0.9rem;">
       {prevFilm ? (
         <a 
           href={`/films/${prevFilm.slug}`} 
-          style="color: #888888; transition: color 0.2s;" 
-          onmouseover="this.style.color='#ffffff';" 
-          onmouseout="this.style.color='#888888';"
+          style="color: #666666; transition: color 0.2s;" 
+          onmouseover="this.style.color='#000000';" 
+          onmouseout="this.style.color='#666666';"
         >
           ← {prevFilm.title}
         </a>
@@ -99,9 +99,9 @@ const nextFilm = currentIndex < films.length - 1 ? films[currentIndex + 1] : nul
       {nextFilm ? (
         <a 
           href={`/films/${nextFilm.slug}`} 
-          style="color: #888888; transition: color 0.2s;" 
-          onmouseover="this.style.color='#ffffff';" 
-          onmouseout="this.style.color='#888888';"
+          style="color: #666666; transition: color 0.2s;" 
+          onmouseover="this.style.color='#000000';" 
+          onmouseout="this.style.color='#666666';"
         >
           {nextFilm.title} →
         </a>

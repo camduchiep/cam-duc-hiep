@@ -1,6 +1,6 @@
 export interface Credit {
   role: string;
-  name: string;
+  names: string[];
 }
 
 export interface Film {
@@ -39,7 +39,7 @@ export const films: Film[] = [
       '/images/films/a-tale-of-king-kong/still-06.png'
     ],
     credits: [
-      { role: 'Directed by', name: 'Cầm Đức Hiệp' }
+      { role: 'Directed by', names: ['Cầm Đức Hiệp'] }
     ]
   },
   {
@@ -65,18 +65,18 @@ export const films: Film[] = [
       '/images/films/utopia/still-09.png'
     ],
     credits: [
-      { role: 'Supported by', name: 'CJ Short Film Project' },
-      { role: 'Written and directed by', name: 'Cầm Đức Hiệp' },
-      { role: 'Produced by', name: 'Châu Thúy An' },
-      { role: 'Supervised by', name: 'Trần Thị Bích Ngọc' },
-      { role: 'Director of Photography', name: 'Hoàng Thảo' },
-      { role: 'Edited by', name: 'Linh DN' },
-      { role: 'Production design by', name: 'Đặng Thùy Anh' },
-      { role: 'Assistant director', name: 'Cao Việt Nga' },
-      { role: 'Costume design by', name: 'Trần Quỳnh Nhi' },
-      { role: 'Additional cinematography', name: 'Nguyễn Hồ Bảo Nghi' },
-      { role: 'Sound post-production', name: 'Sigon Sound Production' },
-      { role: 'Colorist', name: 'Đặng Quốc Anh' }
+      { role: 'Supported by', names: ['CJ Short Film Project'] },
+      { role: 'Written and directed by', names: ['Cầm Đức Hiệp'] },
+      { role: 'Produced by', names: ['Châu Thúy An'] },
+      { role: 'Supervised by', names: ['Trần Thị Bích Ngọc'] },
+      { role: 'Director of Photography', names: ['Hoàng Thảo'] },
+      { role: 'Edited by', names: ['Linh DN'] },
+      { role: 'Production design by', names: ['Đặng Thùy Anh'] },
+      { role: 'Assistant director', names: ['Cao Việt Nga'] },
+      { role: 'Costume design by', names: ['Trần Quỳnh Nhi'] },
+      { role: 'Additional cinematography', names: ['Nguyễn Hồ Bảo Nghi'] },
+      { role: 'Sound post-production', names: ['Sigon Sound Production'] },
+      { role: 'Colorist', names: ['Đặng Quốc Anh'] }
     ]
   },
   {
@@ -98,12 +98,12 @@ export const films: Film[] = [
       '/images/films/lover-for-rent/still-05.png'
     ],
     credits: [
-      { role: 'Produced by', name: 'Varan Vietnam' },
-      { role: 'Directed by', name: 'Cầm Đức Hiệp' },
-      { role: 'Filmed by', name: 'Cầm Đức Hiệp, Nguyễn Hồ Bảo Nghi' },
-      { role: 'Edited by', name: 'Sylvie Gadmer Tiến, Phạm Thị Hảo' },
-      { role: 'Sound by', name: 'Nhâm Ngọc Hà, Nguyễn Hồ Bảo Nghi, Nguyễn Văn Thanh' },
-      { role: 'Instructors', name: 'Trần Phương Thảo, Swann Dubus, Sylvie Gadmer Tiến, Aurelie Ricard' }
+      { role: 'Produced by', names: ['Varan Vietnam'] },
+      { role: 'Directed by', names: ['Cầm Đức Hiệp'] },
+      { role: 'Filmed by', names: ['Cầm Đức Hiệp', 'Nguyễn Hồ Bảo Nghi'] },
+      { role: 'Edited by', names: ['Sylvie Gadmer Tiến', 'Phạm Thị Hảo'] },
+      { role: 'Sound by', names: ['Nhâm Ngọc Hà', 'Nguyễn Hồ Bảo Nghi', 'Nguyễn Văn Thanh'] },
+      { role: 'Instructors', names: ['Trần Phương Thảo', 'Swann Dubus', 'Sylvie Gadmer Tiến', 'Aurelie Ricard'] }
     ]
   },
   {
@@ -124,12 +124,12 @@ export const films: Film[] = [
       '/images/films/thanh-pho-muoi/still-04.png'
     ],
     credits: [
-      { role: 'Produced by', name: 'Thục Võ' },
-      { role: 'Written and directed by', name: 'Cầm Đức Hiệp' },
-      { role: 'Director of Photography', name: 'Hoàng Thảo' },
-      { role: 'Production design by', name: 'Cao Việt Nga' },
-      { role: 'Assistant director', name: 'Châu Thúy An, Mai Ngọc Ngân Giang' },
-      { role: 'Colorist', name: 'Đặng Quốc Anh' }
+      { role: 'Produced by', names: ['Thục Võ'] },
+      { role: 'Written and directed by', names: ['Cầm Đức Hiệp'] },
+      { role: 'Director of Photography', names: ['Hoàng Thảo'] },
+      { role: 'Production design by', names: ['Cao Việt Nga'] },
+      { role: 'Assistant director', names: ['Châu Thúy An', 'Mai Ngọc Ngân Giang'] },
+      { role: 'Colorist', names: ['Đặng Quốc Anh'] }
     ]
   },
   {
@@ -147,8 +147,8 @@ export const films: Film[] = [
       '/images/films/thu-thu/still-01.png'
     ],
     credits: [
-      { role: 'Filmed and Edited by', name: 'Cầm Đức Hiệp' },
-      { role: 'Film letter workshop Instructor', name: 'Trương Quế Chi' }
+      { role: 'Filmed and Edited by', names: ['Cầm Đức Hiệp'] },
+      { role: 'Film letter workshop Instructor', names: ['Trương Quế Chi'] }
     ]
   }
 ];

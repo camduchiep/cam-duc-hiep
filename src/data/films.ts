@@ -9,6 +9,8 @@ export interface Credit {
 export interface Film {
   slug: string;
   title: string;
+  listTitle?: string;
+  listSubtitle?: string;
   originalTitle?: string;
   displayTitle?: string;
   category?: string;
@@ -25,6 +27,8 @@ export interface Film {
 export const films: Film[] = filmsJson.map((f: any) => ({
   slug: f.slug,
   title: f.title,
+  listTitle: f.listTitle || f.title.split('|')[0].trim(),
+  listSubtitle: f.listSubtitle || f.format || '',
   originalTitle: f.originalTitle || '',
   displayTitle: f.title,
   category: f.category || '',

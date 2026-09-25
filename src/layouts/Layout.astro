@@ -82,13 +82,13 @@ const currentPath = Astro.url.pathname;
       <!-- Left Sidebar (No border, clean spacing) -->
       <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; background: #ffffff;">
         <nav style="display: flex; flex-direction: column;">
-          <!-- Films Section Header -->
+          <!-- Films Section Header (In đậm, 16px) -->
           <div style="margin-bottom: 0.65rem;">
             <a 
               href="/" 
-              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease, opacity 0.2s; ${
+              style={`font-family: var(--font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
                 currentPath === '/' 
-                  ? 'color: #545454; font-weight: 400;' 
+                  ? 'color: #313030; font-weight: 600;' 
                   : 'color: #313030; font-weight: 600;'
               }`}
             >
@@ -96,37 +96,38 @@ const currentPath = Astro.url.pathname;
             </a>
           </div>
 
-          <!-- Film Submenu -->
-          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0; margin-bottom: 2.25rem;">
+          <!-- Film Submenu (Viết thường, KHÔNG in đậm, 16px) -->
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.45rem; padding-left: 0; margin-bottom: 2rem;">
             {films.map((film) => {
               const isActive = currentPath === `/films/${film.slug}`;
+              const navTitle = film.title.split('|')[0].trim();
               return (
                 <li>
                   <a 
                     href={`/films/${film.slug}`} 
-                    style={`font-size: 0.92rem; text-decoration: none !important; transition: color 0.15s ease, opacity 0.15s ease; display: block; ${
+                    style={`font-family: var(--font-sans); font-size: 16px; font-weight: 400; text-decoration: none !important; transition: color 0.15s ease; display: block; ${
                       isActive 
-                        ? 'color: #545454; font-weight: 400;' 
-                        : 'color: #313030; font-weight: 500;'
+                        ? 'color: #545454;' 
+                        : 'color: #313030;'
                     }`}
                     onmouseover="this.style.color='#545454';"
                     onmouseout={isActive ? "this.style.color='#545454';" : "this.style.color='#313030';"}
                   >
-                    {film.title}
+                    {navTitle}
                   </a>
                 </li>
               );
             })}
           </ul>
 
-          <!-- About & CV Links -->
-          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+          <!-- About & CV Links (In đậm, 16px) -->
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <a 
               href="/about" 
-              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
+              style={`font-family: var(--font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
                 currentPath === '/about' 
-                  ? 'color: #545454; font-weight: 400;' 
-                  : 'color: #313030; font-weight: 600;'
+                  ? 'color: #545454;' 
+                  : 'color: #313030;'
               }`}
               onmouseover="this.style.color='#545454';"
               onmouseout={currentPath === '/about' ? "this.style.color='#545454';" : "this.style.color='#313030';"}
@@ -136,10 +137,10 @@ const currentPath = Astro.url.pathname;
 
             <a 
               href="/cv" 
-              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
+              style={`font-family: var(--font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
                 currentPath === '/cv' 
-                  ? 'color: #545454; font-weight: 400;' 
-                  : 'color: #313030; font-weight: 600;'
+                  ? 'color: #545454;' 
+                  : 'color: #313030;'
               }`}
               onmouseover="this.style.color='#545454';"
               onmouseout={currentPath === '/cv' ? "this.style.color='#545454';" : "this.style.color='#313030';"}

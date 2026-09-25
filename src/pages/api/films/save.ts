@@ -20,27 +20,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (db) {
       try {
         await db.prepare(`
-          CREATE TABLE IF NOT EXISTS films (
-            slug TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            format TEXT,
-            thumbnail TEXT,
-            content_html TEXT,
-            credits_json TEXT,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
+          CREATE TABLE IF NOT EXISTS films (\n            slug TEXT PRIMARY KEY,\n            title TEXT NOT NULL,\n            list_title TEXT,\n            list_subtitle TEXT,\n            format TEXT,\n            thumbnail TEXT,\n            content_html TEXT,\n            credits_json TEXT,\n            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP\n          );
         `).run();
 
-        // Safely add column if it was created without thumbnail previously
+        // Safely add columns if they were created without them previously
         try {
           await db.prepare('ALTER TABLE films ADD COLUMN thumbnail TEXT').run();
         } catch {}
+        try {
+          await db.prepare('ALTER TABLE films ADD COLUMN list_title TEXT').run();
+        } catch {}
+        try {
+          await db.prepare('ALTER TABLE films ADD COLUMN list_subtitle TEXT').run();
+        } catch {}
 
         await db.prepare(`
-          INSERT INTO films (slug, title, format, thumbnail, content_html, credits_json, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          INSERT INTO films (slug, title, list_title, list_subtitle, format, thumbnail, content_html, credits_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(slug) DO UPDATE SET
             title = excluded.title,
+            list_title = excluded.list_title,
+            list_subtitle = excluded.list_subtitle,
             format = excluded.format,
             thumbnail = excluded.thumbnail,
             content_html = excluded.content_html,
@@ -49,6 +49,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         `).bind(
           body.slug,
           body.title,
+          body.listTitle || '',
+          body.listSubtitle || '',
           body.format || '',
           body.thumbnail || '',
           body.content_html || '',

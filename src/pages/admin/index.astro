@@ -224,7 +224,7 @@ const films = await getFilms(db);
       <div style="display: flex; flex-direction: column; gap: 1.25rem;">
         <div>
           <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-            Title phim: <span style="color: #545454; font-weight: 400;">(Font Fraunces - Cỡ chữ 25px - Ví dụ: a tale of King Kong | sự tích con khỉ)</span>
+            Tiêu đề phim (Trang chi tiết): <span style="color: #545454; font-weight: 400;">(Font Fraunces - Cỡ chữ 25px - Ví dụ: a tale of King Kong | sự tích con khỉ)</span>
           </label>
           <input 
             type="text" 
@@ -236,7 +236,31 @@ const films = await getFilms(db);
 
         <div>
           <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-            Thông tin phim: <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 16px - Ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
+            Tiêu đề cho Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 1 dưới poster ngoài trang chủ. Ví dụ: A tale of King Kong. Nếu để trống sẽ lấy từ Tiêu đề phim)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-list-title-input" 
+            placeholder="A tale of King Kong"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; font-weight: 500; color: #313030;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Mô tả ngắn dưới Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 2 dưới poster ngoài trang chủ. Ví dụ: documentary | 2027 | in developing. Nếu để trống sẽ lấy từ Thông tin phim)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-list-subtitle-input" 
+            placeholder="documentary | 2027 | in developing"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; color: #545454;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Thông tin phim (Trang chi tiết): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 16px - Ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
           </label>
           <input 
             type="text" 
@@ -733,6 +757,8 @@ const films = await getFilms(db);
     // DOM Elements
     const selector = document.getElementById('film-selector');
     const titleInput = document.getElementById('film-title-input');
+    const listTitleInput = document.getElementById('film-list-title-input');
+    const listSubtitleInput = document.getElementById('film-list-subtitle-input');
     const formatInput = document.getElementById('film-format-input');
     const slugInput = document.getElementById('film-slug-input');
     const thumbnailInput = document.getElementById('film-thumbnail-input');
@@ -979,6 +1005,8 @@ const films = await getFilms(db);
         currentFilmSlug = '';
         titleInput.value = '';
         titleInput.placeholder = 'ví dụ: a tale of King Kong | sự tích con khỉ';
+        listTitleInput.value = '';
+        listSubtitleInput.value = '';
         formatInput.value = '';
         formatInput.placeholder = 'ví dụ: Essay film | 15\' | 2027 | Vietnam';
         slugInput.value = '';
@@ -1007,6 +1035,8 @@ const films = await getFilms(db);
 
       currentFilmSlug = film.slug;
       titleInput.value = film.title || '';
+      listTitleInput.value = film.listTitle || (film.title ? film.title.split('|')[0].trim() : '');
+      listSubtitleInput.value = film.listSubtitle || film.format || '';
       formatInput.value = film.format || '';
       slugInput.value = film.slug || '';
       thumbnailInput.value = film.thumbnail || '';
@@ -1954,6 +1984,8 @@ const films = await getFilms(db);
     async function saveFilmAction() {
       const slug = slugInput.value.trim();
       const title = titleInput.value.trim();
+      const listTitle = listTitleInput.value.trim() || title.split('|')[0].trim();
+      const listSubtitle = listSubtitleInput.value.trim() || formatInput.value.trim();
       const format = formatInput.value.trim();
       const thumbnail = thumbnailInput.value.trim();
 
@@ -1986,6 +2018,8 @@ const films = await getFilms(db);
       const payload = {
         slug,
         title,
+        listTitle,
+        listSubtitle,
         format,
         thumbnail,
         content_html: contentHtml,

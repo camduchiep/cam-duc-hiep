@@ -9,7 +9,10 @@
         "role": "Directed by",
         "name": "Cầm Đức Hiệp"
       }
-    ]
+    ],
+    "listTitle": "A tale of King Kong",
+    "listSubtitle": "documentary | 2027 | in developing",
+    "thumbnail": "https://storage.hiepcm.com/films/ataleofkingkong/kingkong-thumbnail.jpg"
   },
   {
     "slug": "utopia",
@@ -65,7 +68,9 @@
         "role": "Colorist",
         "name": "Đặng Quốc Anh"
       }
-    ]
+    ],
+    "listTitle": "Utopia",
+    "listSubtitle": "hybrid | 15' | 2026"
   },
   {
     "slug": "lover-for-rent",
@@ -97,7 +102,9 @@
         "role": "Instructors",
         "name": "Trần Phương Thảo, Swann Dubus, Sylvie Gadmer Tiến, Aurelie Ricard"
       }
-    ]
+    ],
+    "listTitle": "Lover for rent",
+    "listSubtitle": "documentary | 24' | 2025"
   },
   {
     "slug": "thanh-pho-muoi",
@@ -129,7 +136,9 @@
         "role": "Colorist",
         "name": "Đặng Quốc Anh"
       }
-    ]
+    ],
+    "listTitle": "Thành phố muối",
+    "listSubtitle": "fiction | 2024 | in post production"
   },
   {
     "slug": "thu-thu",
@@ -145,6 +154,8 @@
         "role": "Film letter workshop Instructor",
         "name": "Trương Quế Chi"
       }
-    ]
+    ],
+    "listTitle": "Thư - thư",
+    "listSubtitle": "experimental | 2024 | in post production"
   }
 ]

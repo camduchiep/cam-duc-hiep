@@ -9,73 +9,59 @@ const db = Astro.locals.runtime?.env?.DB;
 const dbFilms = await getFilms(db);
 const films = dbFilms && dbFilms.length > 0 ? dbFilms : defaultFilms;
 
-// Group films matching layout: Top Row (2 films), Bottom Rows (3 films per row)
-const topRowFilms = films.slice(0, 2);
-const bottomRowFilms = films.slice(2);
+// Grouping logic:
+// - Max 3 cards per row
+// - If total % 3 === 2 (e.g. 5 films): Row 1 has 2 films (centered), subsequent rows have 3 films
+// - If total % 3 === 0 (e.g. 6 films): Every row has 3 films
+// - If total % 3 === 1 (e.g. 4 films): Row 1 has 2 films, Row 2 has 2 films
+function groupFilmsIntoRows(list: typeof films) {
+  const total = list.length;
+  if (total === 0) return [];
+  if (total <= 3) return [list];
+
+  const rows = [];
+  let start = 0;
+  if (total % 3 === 2) {
+    rows.push(list.slice(0, 2));
+    start = 2;
+  } else if (total % 3 === 1 && total === 4) {
+    rows.push(list.slice(0, 2));
+    start = 2;
+  }
+
+  while (start < total) {
+    rows.push(list.slice(start, start + 3));
+    start += 3;
+  }
+  return rows;
+}
+
+const filmRows = groupFilmsIntoRows(films);
 ---
 
 <Layout title="Films">
-  <div style="display: flex; flex-direction: column; gap: 50px; width: 100%; background: #ffffff;">
-    <!-- Top Row: 2 large cards -->
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
-      {topRowFilms.map((film) => {
-        const subInfo = (film.category && film.year) 
-          ? `${film.category} | ${film.year}` 
-          : (film.format ? film.format.split('|').slice(0, 2).join(' | ').trim() : '');
-        return (
-          <a 
-            href={`/films/${film.slug}`} 
-            style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
-            class="film-card"
-          >
-            <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #f8fafc; margin-bottom: 14px; border-radius: 2px;">
-              {film.thumbnail ? (
-                <img 
-                  src={film.thumbnail} 
-                  alt={film.title} 
-                  loading="eager"
-                  style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
-                  class="film-thumb"
-                />
-              ) : (
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 2px; color: #94a3b8; font-size: 0.82rem;">
-                  <span>Chưa có poster</span>
-                </div>
-              )}
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-              <h2 style="font-size: 1.05rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
-                {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
-              </h2>
-              {subInfo && (
-                <p style="font-size: 0.88rem; color: #545454; font-weight: 400;">
-                  {subInfo}
-                </p>
-              )}
-            </div>
-          </a>
-        );
-      })}
-    </div>
+  <div style="display: flex; flex-direction: column; gap: 48px; width: 100%; background: #ffffff;">
+    {filmRows.map((row) => (
+      <div 
+        class="film-row" 
+        style="display: flex; justify-content: center; gap: 32px; width: 100%;"
+      >
+        {row.map((film, index) => {
+          const displayTitle = film.listTitle || film.title.split('|')[0].trim();
+          const displaySubtitle = film.listSubtitle || film.format || '';
 
-    <!-- Bottom Rows: 3 cards per row -->
-    {bottomRowFilms.length > 0 && (
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
-        {bottomRowFilms.map((film) => {
-          const subInfo = (film.category && film.year) 
-            ? `${film.category} | ${film.year}` 
-            : (film.format ? film.format.split('|').slice(0, 2).join(' | ').trim() : '');
           return (
             <a 
               href={`/films/${film.slug}`} 
-              style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
               class="film-card"
+              style="display: flex; flex-direction: column; text-decoration: none !important; transition: opacity 0.25s; background: #ffffff;"
             >
-              <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #f8fafc; margin-bottom: 14px; border-radius: 2px;">
+              <!-- Thumbnail Frame: Cùng tỉ lệ, kích cỡ và chiều cao bằng nhau trên mọi hàng -->
+              <div class="thumb-frame" style="width: 100%; aspect-ratio: 16 / 9.5; overflow: hidden; background: #f8fafc; margin-bottom: 12px; border-radius: 2px;">
                 {film.thumbnail ? (
                   <img 
                     src={film.thumbnail} 
-                    alt={film.title} 
+                    alt={displayTitle} 
                     loading="lazy"
                     style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
                     class="film-thumb"
@@ -86,13 +72,15 @@ const bottomRowFilms = films.slice(2);
                   </div>
                 )}
               </div>
-              <div style="display: flex; flex-direction: column; gap: 2px;">
-                <h2 style="font-size: 1.02rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
-                  {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
+
+              <!-- Metadata Text: Font Inter cỡ chữ 15.5px -->
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <h2 style="font-family: var(--font-sans); font-size: 15.5px; font-weight: 500; color: #313030; letter-spacing: -0.01em; margin: 0; line-height: 1.35;">
+                  {displayTitle}
                 </h2>
-                {subInfo && (
-                  <p style="font-size: 0.86rem; color: #545454; font-weight: 400;">
-                    {subInfo}
+                {displaySubtitle && (
+                  <p style="font-family: var(--font-sans); font-size: 15.5px; color: #545454; font-weight: 400; margin: 0; line-height: 1.35;">
+                    {displaySubtitle}
                   </p>
                 )}
               </div>
@@ -100,20 +88,30 @@ const bottomRowFilms = films.slice(2);
           );
         })}
       </div>
-    )}
+    ))}
   </div>
 
   <style>
+    /* Mỗi card phim luôn cố định bằng 1/3 chiều rộng hàng trừ đi gap */
+    .film-card {
+      flex: 0 0 calc((100% - 64px) / 3);
+      width: calc((100% - 64px) / 3);
+      max-width: calc((100% - 64px) / 3);
+    }
     .film-card:hover .film-thumb {
       transform: scale(1.02);
       opacity: 0.92;
     }
     @media (max-width: 900px) {
-      div[style*="grid-template-columns: repeat(2"] {
-        grid-template-columns: 1fr !important;
+      .film-row {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 36px !important;
       }
-      div[style*="grid-template-columns: repeat(3"] {
-        grid-template-columns: 1fr !important;
+      .film-card {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
       }
     }
   </style>

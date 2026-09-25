@@ -81,8 +81,8 @@ const films = await getFilms(db);
     }
     /* Canvas Area */
     #canvas-editor {
-      min-height: 480px;
-      padding: 2rem;
+      min-height: 520px;
+      padding: 2.25rem;
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-bottom-left-radius: 0.5rem;
@@ -93,25 +93,56 @@ const films = await getFilms(db);
       color: #000000;
       outline: none;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+      position: relative;
     }
     #canvas-editor:focus {
       border-color: #94a3b8;
     }
     #canvas-editor p {
       margin-bottom: 1.5rem;
+      min-height: 1.5rem;
+    }
+    /* Draggable Image Wrappers */
+    .canvas-img-wrapper {
+      margin: 16px 0;
+      text-align: center;
+      position: relative;
+      cursor: grab;
+      user-select: none;
+      transition: opacity 0.2s ease;
+    }
+    .canvas-img-wrapper:active {
+      cursor: grabbing;
+    }
+    .canvas-img-wrapper.dragging {
+      opacity: 0.35;
+    }
+    .canvas-img-wrapper.drop-target-before {
+      border-top: 3px solid #0284c7 !important;
+    }
+    .canvas-img-wrapper.drop-target-after {
+      border-bottom: 3px solid #0284c7 !important;
     }
     #canvas-editor img {
       max-width: 100%;
       height: auto;
       display: inline-block;
-      margin: 10px 0;
+      margin: 0 auto;
       border-radius: 2px;
       cursor: pointer;
-      transition: outline 0.15s ease;
+      transition: outline 0.15s ease, box-shadow 0.15s ease;
     }
     #canvas-editor img.selected-img {
       outline: 3px solid #0284c7;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+    /* Drop Line Indicator between elements */
+    .drag-drop-line {
+      height: 3px;
+      background: #0284c7;
+      margin: 4px 0;
+      border-radius: 2px;
+      pointer-events: none;
     }
     /* Modal backdrop */
     .modal-overlay {
@@ -132,7 +163,7 @@ const films = await getFilms(db);
       background: #ffffff;
       border-radius: 0.75rem;
       width: 100%;
-      max-width: 900px;
+      max-width: 920px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -235,13 +266,13 @@ const films = await getFilms(db);
             2. Canvas nội dung
           </h3>
           <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Bôi đen văn bản để đổi font size, màu sắc, căn lề, khoảng cách dòng.
+            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Ảnh đã chèn có thể <strong>kéo thả đổi vị trí</strong> giữa các đoạn văn/ảnh khác, hoặc bấm nút để <strong>Crop lại ảnh</strong> bất kỳ lúc nào.
           </p>
         </div>
       </div>
 
       <!-- Rich Canvas Editor Frame -->
-      <div style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
         <!-- Toolbar -->
         <div class="editor-toolbar">
           <!-- Font Size -->
@@ -319,26 +350,48 @@ const films = await getFilms(db);
           <div>
             <button type="button" id="btn-insert-image" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; padding: 0.35rem 0.85rem; gap: 0.4rem;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Insert ảnh (Upload R2 / Link / Crop)
+              Insert ảnh mới (Upload R2 / Crop)
             </button>
           </div>
         </div>
 
         <!-- Editable Content Area -->
         <div id="canvas-editor" contenteditable="true" spellcheck="false">
-          <!-- Initial film content injected here -->
+          <!-- Film content injected here -->
         </div>
       </div>
 
       <!-- Floating Image Controls Tooltip (Shown when an image is clicked in Canvas) -->
-      <div id="img-floating-toolbar" style="display: none; position: absolute; background: #0f172a; color: #fff; border-radius: 0.375rem; padding: 0.35rem 0.5rem; gap: 0.4rem; align-items: center; z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-size: 0.82rem;">
+      <div id="img-floating-toolbar" style="display: none; position: absolute; background: #0f172a; color: #fff; border-radius: 0.5rem; padding: 0.45rem 0.65rem; gap: 0.45rem; align-items: center; z-index: 100; box-shadow: 0 10px 20px -3px rgba(0,0,0,0.4); font-size: 0.82rem; border: 1px solid #334155;">
         <span style="font-weight: 600; color: #94a3b8; padding-right: 0.35rem; border-right: 1px solid #334155;">Size:</span>
-        <button type="button" class="btn-img-size tb-btn" data-size="25%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">25%</button>
-        <button type="button" class="btn-img-size tb-btn" data-size="50%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">50%</button>
-        <button type="button" class="btn-img-size tb-btn" data-size="75%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">75%</button>
-        <button type="button" class="btn-img-size tb-btn" data-size="100%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">100%</button>
-        <span style="height: 14px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
-        <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 24px; padding: 0 0.5rem; font-size: 0.75rem;">✕ Xóa ảnh</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="25%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">25%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="50%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">50%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="75%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">75%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="100%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">100%</button>
+        
+        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+        
+        <!-- Re-crop button (Crop lại ảnh đã có) -->
+        <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
+          ✂️ Crop lại ảnh
+        </button>
+
+        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+
+        <!-- Position reordering buttons (Đổi vị trí lên / xuống) -->
+        <span style="font-weight: 600; color: #94a3b8; padding-right: 0.25rem;">Vị trí:</span>
+        <button type="button" id="btn-img-move-up" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển lên trên đoạn văn/ảnh liền trước">
+          ⬆ Lên
+        </button>
+        <button type="button" id="btn-img-move-down" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển xuống dưới đoạn văn/ảnh liền sau">
+          ⬇ Xuống
+        </button>
+
+        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+
+        <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;">
+          🗑️ Xóa ảnh
+        </button>
       </div>
     </div>
 
@@ -373,11 +426,11 @@ const films = await getFilms(db);
       <!-- Modal Header -->
       <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
         <div>
-          <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">
+          <h3 id="modal-title-heading" style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">
             Chèn & Chỉnh sửa ảnh (Crop tùy thích)
           </h3>
-          <p style="font-size: 0.82rem; color: #64748b; margin: 0.15rem 0 0 0;">
-            Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi insert.
+          <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #64748b; margin: 0.15rem 0 0 0;">
+            Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi lưu.
           </p>
         </div>
         <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">✕</button>
@@ -385,8 +438,8 @@ const films = await getFilms(db);
 
       <!-- Modal Body -->
       <div style="padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem;">
-        <!-- Input Choice: Upload vs Link -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
+        <!-- Input Choice (hidden if re-cropping existing image) -->
+        <div id="modal-input-sources" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
           <!-- Option A: Upload to R2 -->
           <div>
             <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #0f172a; margin-bottom: 0.4rem;">
@@ -408,6 +461,11 @@ const films = await getFilms(db);
               <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;">Tải ảnh</button>
             </div>
           </div>
+        </div>
+
+        <!-- Re-crop Notice (shown only when re-cropping existing image) -->
+        <div id="modal-recrop-notice" style="display: none; background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
+          ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể kéo thả 4 góc tự do không giới hạn để cắt ảnh, hoặc xoay ảnh. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
         </div>
 
         <!-- Preview & Crop Workspace -->
@@ -544,6 +602,10 @@ const films = await getFilms(db);
 
     // Image Modal Elements
     const imgModal = document.getElementById('image-modal');
+    const modalHeading = document.getElementById('modal-title-heading');
+    const modalSubHeading = document.getElementById('modal-subtitle-heading');
+    const modalInputSources = document.getElementById('modal-input-sources');
+    const modalRecropNotice = document.getElementById('modal-recrop-notice');
     const modalCloseBtn = document.getElementById('btn-modal-close');
     const modalCancelBtn = document.getElementById('btn-modal-cancel');
     const modalSaveBtn = document.getElementById('btn-modal-save');
@@ -558,6 +620,9 @@ const films = await getFilms(db);
 
     // Floating Image Toolbar Elements
     const imgFloatingToolbar = document.getElementById('img-floating-toolbar');
+    const btnImgRecrop = document.getElementById('btn-img-recrop');
+    const btnImgMoveUp = document.getElementById('btn-img-move-up');
+    const btnImgMoveDown = document.getElementById('btn-img-move-down');
     const btnImgDelete = document.getElementById('btn-img-delete');
     let selectedImageElement = null;
 
@@ -574,11 +639,13 @@ const films = await getFilms(db);
 
     let cropper = null;
     let savedSelectionRange = null;
+    let isReCropping = false;
+    let activeReCropImg = null;
+    let draggedWrapper = null;
 
     // 2. Load Film Data into Canvas Form
     function loadFilm(slug) {
       if (slug === '__NEW_FILM__') {
-        // Reset form for brand new film
         currentFilmSlug = '';
         titleInput.value = '';
         formatInput.value = '';
@@ -586,6 +653,7 @@ const films = await getFilms(db);
         canvasEditor.innerHTML = '<p>Bắt đầu viết nội dung phim tại đây...</p>';
         renderCredits([{ role: 'Directed by', name: 'Cầm Đức Hiệp' }]);
         viewLiveBtn.style.display = 'none';
+        ensureDraggableImages();
         return;
       }
 
@@ -609,6 +677,9 @@ const films = await getFilms(db);
 
       viewLiveBtn.href = `/films/${film.slug}`;
       viewLiveBtn.style.display = 'inline-flex';
+
+      // Ensure all images are wrapped in draggable wrappers
+      ensureDraggableImages();
     }
 
     // 3. Render Credits Rows
@@ -618,7 +689,7 @@ const films = await getFilms(db);
         credits = [{ role: '', name: '' }];
       }
 
-      credits.forEach((cr, idx) => {
+      credits.forEach((cr) => {
         const row = document.createElement('div');
         row.className = 'credit-row';
         row.style.cssText = 'display: grid; grid-template-columns: 240px 1fr 38px; gap: 0.75rem; align-items: center;';
@@ -675,7 +746,6 @@ const films = await getFilms(db);
     });
 
     // 4. Formatting Tools Implementation
-    // Font size change
     tbFontSize.addEventListener('change', (e) => {
       const size = e.target.value;
       const selection = window.getSelection();
@@ -687,12 +757,10 @@ const films = await getFilms(db);
       range.insertNode(span);
     });
 
-    // Color change
     tbColor.addEventListener('input', (e) => {
       document.execCommand('foreColor', false, e.target.value);
     });
 
-    // Line height change
     tbLineHeight.addEventListener('change', (e) => {
       const lh = e.target.value;
       canvasEditor.style.lineHeight = lh;
@@ -709,7 +777,6 @@ const films = await getFilms(db);
       }
     });
 
-    // Paragraph margin change
     tbParaMargin.addEventListener('change', (e) => {
       const margin = e.target.value;
       const pElements = canvasEditor.querySelectorAll('p');
@@ -718,21 +785,39 @@ const films = await getFilms(db);
       });
     });
 
-    // 5. Image Modal & Crop System
+    // 5. Image Modal & Crop System (Insert New OR Re-Crop Existing)
     btnInsertImage.addEventListener('click', () => {
-      // Save current cursor position in canvas
+      isReCropping = false;
+      activeReCropImg = null;
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         savedSelectionRange = sel.getRangeAt(0).cloneRange();
       }
-      openImageModal();
+      openImageModal(false);
     });
 
-    function openImageModal() {
+    function openImageModal(forReCrop = false) {
       imgModal.style.display = 'flex';
       modalSaveBtn.disabled = true;
       cropperTargetImg.style.display = 'none';
       cropperPlaceholder.style.display = 'block';
+
+      if (forReCrop) {
+        modalHeading.innerText = '✂️ Crop lại ảnh đã chọn trong Canvas';
+        modalSubHeading.innerText = 'Kéo thả 4 góc tự do để thay đổi khung crop. Sau khi nhấn Save, ảnh trong Canvas sẽ được cập nhật trực tiếp.';
+        modalInputSources.style.display = 'none';
+        modalRecropNotice.style.display = 'block';
+        modalSaveBtn.innerText = 'Save & Cập nhật ảnh';
+      } else {
+        modalHeading.innerText = 'Chèn & Chỉnh sửa ảnh (Crop tùy thích)';
+        modalSubHeading.innerText = 'Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi insert.';
+        modalInputSources.style.display = 'grid';
+        modalRecropNotice.style.display = 'none';
+        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+        modalFileInput.value = '';
+        modalLinkInput.value = '';
+      }
+
       if (cropper) {
         cropper.destroy();
         cropper = null;
@@ -745,12 +830,13 @@ const films = await getFilms(db);
         cropper.destroy();
         cropper = null;
       }
+      isReCropping = false;
+      activeReCropImg = null;
     }
 
     modalCloseBtn.addEventListener('click', closeImageModal);
     modalCancelBtn.addEventListener('click', closeImageModal);
 
-    // Initialize Cropper on an image URL
     function setupCropper(srcUrl) {
       if (cropper) {
         cropper.destroy();
@@ -764,7 +850,7 @@ const films = await getFilms(db);
       cropper = new Cropper(cropperTargetImg, {
         aspectRatio: NaN, // Free crop, no aspect ratio restrictions!
         viewMode: 1,
-        autoCropArea: 0.9,
+        autoCropArea: 0.95,
         responsive: true,
         background: false,
         ready() {
@@ -773,21 +859,21 @@ const films = await getFilms(db);
       });
     }
 
-    // A: File Input (Upload to R2)
+    // Modal File Upload to R2
     modalFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       modalUploadLoading.style.display = 'block';
 
-      // 1. Immediately preview for cropping
+      // Preview immediately
       const reader = new FileReader();
       reader.onload = (loadEvt) => {
         setupCropper(loadEvt.target.result);
       };
       reader.readAsDataURL(file);
 
-      // 2. Also send to R2 upload endpoint
+      // Upload to R2
       const formData = new FormData();
       formData.append('file', file);
       try {
@@ -803,7 +889,7 @@ const films = await getFilms(db);
       }
     });
 
-    // B: Link Input (Load link)
+    // Modal Link Input
     btnLoadLink.addEventListener('click', () => {
       const url = modalLinkInput.value.trim();
       if (!url) {
@@ -813,27 +899,23 @@ const films = await getFilms(db);
       setupCropper(url);
     });
 
-    // Crop Rotate Button
     btnCropRotate.addEventListener('click', () => {
       if (cropper) cropper.rotate(90);
     });
 
-    // Crop Reset Button
     btnCropReset.addEventListener('click', () => {
       if (cropper) cropper.reset();
     });
 
-    // Save & Insert Cropped Image into Canvas
+    // Save Cropped Image (handles both Insert New and Re-Crop)
     modalSaveBtn.addEventListener('click', async () => {
       if (!cropper) return;
 
       modalSaveBtn.disabled = true;
       modalSaveBtn.innerText = 'Đang xử lý ảnh...';
 
-      // Get cropped canvas
       const croppedCanvas = cropper.getCroppedCanvas();
-      
-      // Upload cropped result to R2
+
       croppedCanvas.toBlob(async (blob) => {
         let finalImageUrl = '';
 
@@ -857,31 +939,41 @@ const films = await getFilms(db);
           finalImageUrl = croppedCanvas.toDataURL('image/png');
         }
 
-        // Insert into Canvas at cursor position
-        canvasEditor.focus();
-        if (savedSelectionRange) {
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(savedSelectionRange);
-        }
-
-        const imgWrapper = document.createElement('div');
-        imgWrapper.style.cssText = 'text-align: center; margin: 16px 0;';
-        const img = document.createElement('img');
-        img.src = finalImageUrl;
-        img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
-        imgWrapper.appendChild(img);
-
-        // Add spacing paragraph after image
-        const pAfter = document.createElement('p');
-        pAfter.innerHTML = '<br/>';
-
-        if (savedSelectionRange) {
-          savedSelectionRange.insertNode(pAfter);
-          savedSelectionRange.insertNode(imgWrapper);
+        if (isReCropping && activeReCropImg) {
+          // Case 1: Re-crop existing image in-place
+          activeReCropImg.src = finalImageUrl;
+          positionFloatingToolbar(activeReCropImg);
         } else {
-          canvasEditor.appendChild(imgWrapper);
-          canvasEditor.appendChild(pAfter);
+          // Case 2: Insert brand new image
+          canvasEditor.focus();
+          if (savedSelectionRange) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedSelectionRange);
+          }
+
+          const imgWrapper = document.createElement('div');
+          imgWrapper.className = 'canvas-img-wrapper';
+          imgWrapper.setAttribute('draggable', 'true');
+          imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+          const img = document.createElement('img');
+          img.src = finalImageUrl;
+          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
+          imgWrapper.appendChild(img);
+
+          const pAfter = document.createElement('p');
+          pAfter.innerHTML = '<br/>';
+
+          if (savedSelectionRange) {
+            savedSelectionRange.insertNode(pAfter);
+            savedSelectionRange.insertNode(imgWrapper);
+          } else {
+            canvasEditor.appendChild(imgWrapper);
+            canvasEditor.appendChild(pAfter);
+          }
+
+          attachDragEventsToWrapper(imgWrapper);
         }
 
         closeImageModal();
@@ -890,7 +982,14 @@ const films = await getFilms(db);
       }, 'image/png');
     });
 
-    // 6. Resizable & Clickable Images in Canvas
+    // 6. Floating Image Toolbar & Re-Crop & Move Position
+    function positionFloatingToolbar(img) {
+      const rect = img.getBoundingClientRect();
+      imgFloatingToolbar.style.display = 'flex';
+      imgFloatingToolbar.style.top = `${window.scrollY + rect.top - 46}px`;
+      imgFloatingToolbar.style.left = `${Math.max(10, window.scrollX + rect.left)}px`;
+    }
+
     canvasEditor.addEventListener('click', (e) => {
       const target = e.target;
       if (target.tagName === 'IMG') {
@@ -899,13 +998,8 @@ const films = await getFilms(db);
         }
         selectedImageElement = target;
         selectedImageElement.classList.add('selected-img');
-
-        // Position floating toolbar above image
-        const rect = target.getBoundingClientRect();
-        imgFloatingToolbar.style.display = 'flex';
-        imgFloatingToolbar.style.top = `${window.scrollY + rect.top - 42}px`;
-        imgFloatingToolbar.style.left = `${window.scrollX + rect.left}px`;
-      } else {
+        positionFloatingToolbar(target);
+      } else if (!e.target.closest('#img-floating-toolbar')) {
         if (selectedImageElement) {
           selectedImageElement.classList.remove('selected-img');
           selectedImageElement = null;
@@ -914,33 +1008,160 @@ const films = await getFilms(db);
       }
     });
 
-    // Floating toolbar size buttons
+    // A: Size Buttons
     document.querySelectorAll('.btn-img-size').forEach(btn => {
       btn.addEventListener('click', () => {
         if (selectedImageElement) {
           const size = btn.getAttribute('data-size');
           selectedImageElement.style.width = size;
           selectedImageElement.style.maxWidth = '100%';
+          positionFloatingToolbar(selectedImageElement);
         }
       });
     });
 
-    // Floating toolbar delete button
+    // B: RE-CROP EXISTING IMAGE
+    btnImgRecrop.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      isReCropping = true;
+      activeReCropImg = selectedImageElement;
+      openImageModal(true);
+      setupCropper(selectedImageElement.src);
+    });
+
+    // C: MOVE IMAGE UP (Di chuyển lên trên)
+    btnImgMoveUp.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
+      if (!wrapper || wrapper === canvasEditor) return;
+
+      const prev = wrapper.previousElementSibling;
+      if (prev) {
+        wrapper.parentElement.insertBefore(wrapper, prev);
+        positionFloatingToolbar(selectedImageElement);
+      }
+    });
+
+    // D: MOVE IMAGE DOWN (Di chuyển xuống dưới)
+    btnImgMoveDown.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
+      if (!wrapper || wrapper === canvasEditor) return;
+
+      const next = wrapper.nextElementSibling;
+      if (next) {
+        wrapper.parentElement.insertBefore(wrapper, next.nextElementSibling);
+        positionFloatingToolbar(selectedImageElement);
+      }
+    });
+
+    // E: Delete Image Button
     btnImgDelete.addEventListener('click', () => {
       if (selectedImageElement) {
-        const parent = selectedImageElement.parentElement;
+        const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
         selectedImageElement.remove();
-        if (parent && parent.children.length === 0) {
-          parent.remove();
+        if (wrapper && wrapper.children.length === 0) {
+          wrapper.remove();
         }
         selectedImageElement = null;
         imgFloatingToolbar.style.display = 'none';
       }
     });
 
-    // 7. Full Website Preview Modal
+    // 7. DRAG-AND-DROP REORDERING OF IMAGES BETWEEN TEXT & IMAGES
+    function attachDragEventsToWrapper(wrapper) {
+      wrapper.setAttribute('draggable', 'true');
+
+      wrapper.addEventListener('dragstart', (e) => {
+        draggedWrapper = wrapper;
+        wrapper.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+      });
+
+      wrapper.addEventListener('dragend', () => {
+        wrapper.classList.remove('dragging');
+        draggedWrapper = null;
+        document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+          el.classList.remove('drop-target-before', 'drop-target-after');
+        });
+      });
+    }
+
+    // Canvas Drop Target Handling
+    canvasEditor.addEventListener('dragover', (e) => {
+      if (!draggedWrapper) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+
+      const target = e.target.closest('#canvas-editor > *');
+      if (target && target !== draggedWrapper) {
+        const rect = target.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+
+        document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+          el.classList.remove('drop-target-before', 'drop-target-after');
+        });
+
+        if (e.clientY < midY) {
+          target.classList.add('drop-target-before');
+        } else {
+          target.classList.add('drop-target-after');
+        }
+      }
+    });
+
+    canvasEditor.addEventListener('dragleave', (e) => {
+      const target = e.target.closest('#canvas-editor > *');
+      if (target) {
+        target.classList.remove('drop-target-before', 'drop-target-after');
+      }
+    });
+
+    canvasEditor.addEventListener('drop', (e) => {
+      if (!draggedWrapper) return;
+      e.preventDefault();
+
+      const target = e.target.closest('#canvas-editor > *');
+      if (target && target !== draggedWrapper) {
+        const rect = target.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+
+        if (e.clientY < midY) {
+          canvasEditor.insertBefore(draggedWrapper, target);
+        } else {
+          canvasEditor.insertBefore(draggedWrapper, target.nextElementSibling);
+        }
+      }
+
+      document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+        el.classList.remove('drop-target-before', 'drop-target-after');
+      });
+
+      if (selectedImageElement) {
+        positionFloatingToolbar(selectedImageElement);
+      }
+    });
+
+    // Helper: Wrap any bare images in canvas into draggable wrappers
+    function ensureDraggableImages() {
+      const allImgs = canvasEditor.querySelectorAll('img');
+      allImgs.forEach(img => {
+        let wrapper = img.closest('.canvas-img-wrapper');
+        if (!wrapper) {
+          wrapper = document.createElement('div');
+          wrapper.className = 'canvas-img-wrapper';
+          wrapper.setAttribute('draggable', 'true');
+          wrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+          img.parentNode.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
+        }
+        attachDragEventsToWrapper(wrapper);
+      });
+    }
+
+    // 8. Full Website Preview Modal
     btnOpenPreview.addEventListener('click', () => {
-      // 1. Populate sidebar films
       previewSidebarFilms.innerHTML = '';
       allFilms.forEach(f => {
         const li = document.createElement('li');
@@ -953,14 +1174,10 @@ const films = await getFilms(db);
         previewSidebarFilms.appendChild(li);
       });
 
-      // 2. Populate title & format
       previewFilmTitle.innerText = titleInput.value.trim() || 'Chưa đặt tiêu đề';
       previewFilmFormat.innerText = formatInput.value.trim() || '';
-
-      // 3. Populate Canvas HTML content
       previewCanvasRender.innerHTML = canvasEditor.innerHTML;
 
-      // 4. Populate Credits column
       previewFilmCredits.innerHTML = '';
       const creditRows = creditsList.querySelectorAll('.credit-row');
       creditRows.forEach(row => {
@@ -977,7 +1194,6 @@ const films = await getFilms(db);
         }
       });
 
-      // Open Modal
       previewModal.style.display = 'block';
     });
 
@@ -990,11 +1206,18 @@ const films = await getFilms(db);
       previewModal.style.display = 'none';
     });
 
-    // 8. Save Film to CMS Action
+    // 9. Save Film to CMS Action
     async function saveFilmAction() {
       const slug = slugInput.value.trim();
       const title = titleInput.value.trim();
       const format = formatInput.value.trim();
+
+      // Clean selection styling before saving
+      if (selectedImageElement) {
+        selectedImageElement.classList.remove('selected-img');
+      }
+      imgFloatingToolbar.style.display = 'none';
+
       const contentHtml = canvasEditor.innerHTML;
 
       if (!title || !slug) {
@@ -1006,7 +1229,6 @@ const films = await getFilms(db);
       saveFilmBtn.innerText = 'Đang lưu vào CMS...';
       saveStatusBanner.style.display = 'none';
 
-      // Gather credits
       const credits = [];
       const rows = creditsList.querySelectorAll('.credit-row');
       rows.forEach(r => {
@@ -1045,13 +1267,11 @@ const films = await getFilms(db);
             </a>
           `;
 
-          // Update local memory
           const existingIdx = allFilms.findIndex(f => f.slug === slug);
           if (existingIdx >= 0) {
             allFilms[existingIdx] = data.film;
           } else {
             allFilms.push(data.film);
-            // Add option to selector
             const opt = document.createElement('option');
             opt.value = slug;
             opt.innerText = title;

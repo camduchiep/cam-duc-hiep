@@ -96,7 +96,7 @@ const films = await getFilms(db);
       border-bottom-right-radius: 0.5rem;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: 15px;
-      line-height: 1.6;
+      line-height: 1.4;
       color: #313030;
       outline: none;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
@@ -107,7 +107,7 @@ const films = await getFilms(db);
     }
     #canvas-editor p {
       font-size: 15px;
-      line-height: 1.6;
+      line-height: 1.4;
       color: #313030;
       margin-bottom: 1.5rem;
       min-height: 1.5rem;
@@ -340,8 +340,8 @@ const films = await getFilms(db);
             <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Giãn dòng:</label>
             <select id="tb-lineheight" class="tb-select" title="Khoảng cách dòng trên dưới">
               <option value="1.2">1.2 (Hẹp)</option>
-              <option value="1.4">1.4</option>
-              <option value="1.6" selected>1.6 (Chuẩn)</option>
+              <option value="1.4" selected>1.4 (Chuẩn)</option>
+              <option value="1.6">1.6</option>
               <option value="1.8">1.8 (Rộng)</option>
               <option value="2.0">2.0</option>
               <option value="2.4">2.4</option>
@@ -582,7 +582,7 @@ const films = await getFilms(db);
               </p>
 
               <!-- Text trên canvas: font Inter, cỡ chữ 15px, màu #313030 -->
-              <div id="preview-canvas-render" style="font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.6; color: #313030;">
+              <div id="preview-canvas-render" style="font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: #313030;">
                 <!-- Canvas HTML content -->
               </div>
             </div>
@@ -1357,6 +1357,7 @@ const films = await getFilms(db);
       previewCanvasRender.innerHTML = canvasEditor.innerHTML;
       previewCanvasRender.style.fontFamily = "'Inter', system-ui, sans-serif";
       previewCanvasRender.style.fontSize = "15px";
+      previewCanvasRender.style.lineHeight = "1.4";
       previewCanvasRender.style.color = "#313030";
 
       // Credit: font Inter, cỡ chữ 13px: role #545454, name #313030

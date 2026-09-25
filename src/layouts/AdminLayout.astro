@@ -130,7 +130,7 @@ const { title, activeTab = 'films' } = Astro.props;
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
                 Tất cả phim (5)
               </a>
-              <a href="/admin/films/them-moi" class={`nav-link ${activeTab === 'new-film' ? 'active' : ''}`}>
+              <a href="/admin?new=1" class={`nav-link ${activeTab === 'new-film' ? 'active' : ''}`}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 Thêm phim mới
               </a>

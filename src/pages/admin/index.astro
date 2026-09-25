@@ -4,11 +4,12 @@ import { getFilms } from '../../lib/films';
 
 export const prerender = false;
 
+const isNew = Astro.url.searchParams.get('new') === '1';
 const db = Astro.locals.runtime?.env?.DB;
 const films = await getFilms(db);
 ---
 
-<AdminLayout title="Canvas Quản trị Phim" activeTab="films">
+<AdminLayout title="Canvas Quản trị Phim" activeTab={isNew ? 'new-film' : 'films'}>
   <!-- Cropper.js CDN for Free Cropping & Ratios -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -765,10 +766,20 @@ const films = await getFilms(db);
       if (slug === '__NEW_FILM__') {
         currentFilmSlug = '';
         titleInput.value = '';
+        titleInput.placeholder = 'ví dụ: a tale of King Kong | sự tích con khỉ';
         formatInput.value = '';
+        formatInput.placeholder = 'ví dụ: Essay film | 15\' | 2027 | Vietnam';
         slugInput.value = '';
-        canvasEditor.innerHTML = '<p style="font-size: 15px; color: #313030;">Bắt đầu viết nội dung phim tại đây...</p>';
-        renderCredits([{ role: 'Directed by', name: 'Cầm Đức Hiệp' }]);
+        slugInput.placeholder = 'vi-du-ten-phim';
+        canvasEditor.innerHTML = '<p style="font-size: 15px; line-height: 1.4; color: #313030; margin-bottom: 24px;">Nhập tóm tắt hoặc nội dung giới thiệu tác phẩm tại đây...</p><p style="font-size: 15px; line-height: 1.4; color: #313030; margin-bottom: 24px;"><br></p>';
+        renderCredits([
+          { role: 'Directed by', name: 'Cầm Đức Hiệp' },
+          { role: 'Written by', name: 'Cầm Đức Hiệp' },
+          { role: 'Produced by', name: '' },
+          { role: 'Director of Photography', name: '' },
+          { role: 'Edited by', name: '' },
+          { role: 'Sound', name: '' }
+        ]);
         viewLiveBtn.style.display = 'none';
         ensureDraggableImages();
         historyStack = [canvasEditor.innerHTML];
@@ -1490,8 +1501,20 @@ const films = await getFilms(db);
 
     saveFilmBtn.addEventListener('click', saveFilmAction);
 
-    // Initial load first film
-    if (allFilms && allFilms.length > 0) {
+    // Initial load: check URL query params for ?new=1 or ?slug=xxx
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('new') === '1' || urlParams.get('action') === 'new') {
+      selector.value = '__NEW_FILM__';
+      loadFilm('__NEW_FILM__');
+    } else if (urlParams.get('slug')) {
+      const targetSlug = urlParams.get('slug');
+      if (allFilms.some(f => f.slug === targetSlug)) {
+        selector.value = targetSlug;
+        loadFilm(targetSlug);
+      } else if (allFilms && allFilms.length > 0) {
+        loadFilm(allFilms[0].slug);
+      }
+    } else if (allFilms && allFilms.length > 0) {
       loadFilm(allFilms[0].slug);
     }
   </script>

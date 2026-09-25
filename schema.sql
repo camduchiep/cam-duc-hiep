@@ -26,6 +26,15 @@ CREATE TABLE IF NOT EXISTS pages (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS films (
+  slug TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  format TEXT,
+  content_html TEXT,
+  credits_json TEXT,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Insert sample post if empty
 INSERT OR IGNORE INTO posts (id, title, slug, excerpt, content, cover_image, status)
 VALUES (

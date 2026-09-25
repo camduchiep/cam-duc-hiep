@@ -10,3 +10,7 @@ bucket = "./dist"
 binding = "DB"
 database_name = "cam-duc-hiep-db"
 database_id = "98bc8533-1be2-4c52-bf45-49bbd59c949a"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "camduchiepwebsite"

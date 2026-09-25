@@ -1,267 +1,1093 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-import { films } from '../../data/films';
+import { getFilms } from '../../lib/films';
 
 export const prerender = false;
 
-// Category colors helper
-function getCategoryBadge(category: string) {
-  const cat = category.toLowerCase();
-  if (cat.includes('essay')) return { bg: '#fef3c7', text: '#92400e', border: '#fde68a' };
-  if (cat.includes('hybrid')) return { bg: '#f3e8ff', text: '#6b21a8', border: '#e9d5ff' };
-  if (cat.includes('documentary')) return { bg: '#dcfce7', text: '#166534', border: '#bbf7d0' };
-  if (cat.includes('fiction')) return { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' };
-  if (cat.includes('experimental')) return { bg: '#ffe4e6', text: '#9f1239', border: '#fecdd3' };
-  return { bg: '#f1f5f9', text: '#475569', border: '#e2e8f0' };
-}
-
-// Stage status helper
-function getStatusBadge(year: string) {
-  const y = year.toLowerCase();
-  if (y.includes('developing')) {
-    return { label: 'Đang phát triển (Development)', bg: '#fef9c3', text: '#854d0e' };
-  }
-  if (y.includes('post production')) {
-    return { label: 'Đang hậu kỳ (Post-production)', bg: '#ffedd5', text: '#9a3412' };
-  }
-  return { label: 'Đã hoàn thành', bg: '#dcfce7', text: '#166534' };
-}
-
-// Calculate summary stats
-const totalFilms = films.length;
-const totalStills = films.reduce((acc, f) => acc + (f.stills?.length || 0), 0);
-const developingCount = films.filter(f => f.year.toLowerCase().includes('developing')).length;
-const postProdCount = films.filter(f => f.year.toLowerCase().includes('post production')).length;
-const completedCount = totalFilms - developingCount - postProdCount;
+const db = Astro.locals.runtime?.env?.DB;
+const films = await getFilms(db);
 ---
 
-<AdminLayout title="Quản lý Phim" activeTab="films">
-  <!-- Page Header -->
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 1.85rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
-        Quản lý Danh mục Phim (Films)
-      </h1>
-      <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.35rem;">
-        Hệ thống quản trị danh mục tác phẩm điện ảnh của Đạo diễn Cầm Đức Hiệp. Hiện có {totalFilms} phim đang hiển thị ngoài website.
-      </p>
+<AdminLayout title="Canvas Quản trị Phim" activeTab="films">
+  <!-- Cropper.js CDN for Free Cropping -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+  <!-- Google Fonts for Web Preview -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style is:global>
+    /* Canvas Editor Specific Styling */
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 0.5rem;
+      border-top-right-radius: 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .tb-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      padding-right: 0.5rem;
+      margin-right: 0.35rem;
+      border-right: 1px solid #cbd5e1;
+    }
+    .tb-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      min-width: 32px;
+      transition: all 0.15s ease;
+    }
+    .tb-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+    .tb-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .tb-select {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      color: #334155;
+      height: 32px;
+      cursor: pointer;
+    }
+    /* Canvas Area */
+    #canvas-editor {
+      min-height: 480px;
+      padding: 2rem;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-bottom-left-radius: 0.5rem;
+      border-bottom-right-radius: 0.5rem;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #000000;
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+    #canvas-editor:focus {
+      border-color: #94a3b8;
+    }
+    #canvas-editor p {
+      margin-bottom: 1.5rem;
+    }
+    #canvas-editor img {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+      margin: 10px 0;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: outline 0.15s ease;
+    }
+    #canvas-editor img.selected-img {
+      outline: 3px solid #0284c7;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+    /* Modal backdrop */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+  </style>
+
+  <!-- Top Selection & Action Bar -->
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span style="font-weight: 700; font-size: 1rem; color: #0f172a; white-space: nowrap;">
+        🎬 Chọn phim cần sửa:
+      </span>
+      <select id="film-selector" style="padding: 0.55rem 0.85rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 0.95rem; font-weight: 600; color: #0f172a; min-width: 300px; background: #f8fafc; cursor: pointer;">
+        {films.map((f) => (
+          <option value={f.slug}>{f.title}</option>
+        ))}
+        <option value="__NEW_FILM__">+ Tạo phim mới...</option>
+      </select>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="/" target="_blank" class="btn btn-outline">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        Xem menu ngoài web
+
+    <!-- Action Buttons -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button type="button" id="btn-open-preview" class="btn btn-outline" style="border-color: #0f172a; color: #0f172a; font-weight: 600;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview toàn bộ web
+      </button>
+
+      <a id="btn-view-live" href={`/films/${films[0]?.slug || ''}`} target="_blank" class="btn btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Xem ngoài web ↗
       </a>
-      <a href="/admin/films/them-moi" class="btn btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Thêm phim mới
-      </a>
+
+      <button type="button" id="btn-save-film" class="btn btn-primary" style="background: #0284c7; padding: 0.6rem 1.4rem; font-size: 0.95rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Lưu thay đổi (Save)
+      </button>
     </div>
   </div>
 
-  <!-- Stats Overview Grid -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.25rem;">
-    <!-- Stat 1 -->
-    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-      <div style="width: 48px; height: 48px; border-radius: 10px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-        🎬
-      </div>
-      <div>
-        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Tổng số phim</div>
-        <div style="font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1.2; margin-top: 0.15rem;">
-          {totalFilms} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">tác phẩm</span>
+  <!-- Notification Banner -->
+  <div id="save-status-banner" style="display: none; padding: 1rem 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; font-weight: 500;"></div>
+
+  <!-- MAIN CANVAS CONTAINER -->
+  <div style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- PHẦN 1: TITLE & THÔNG TIN PHIM -->
+    <div class="card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+        1. Tiêu đề & Thông tin phim
+      </h3>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Title phim: <span style="color: #64748b; font-weight: 400;">(Ví dụ: a tale of King Kong | sự tích con khỉ)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-title-input" 
+            placeholder="a tale of King Kong | sự tích con khỉ"
+            style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 1.15rem; font-weight: 600; color: #0f172a;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
+            Thông tin phim: <span style="color: #64748b; font-weight: 400;">(Điền chay, ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-format-input" 
+            placeholder="Essay film | 15' | 2027 | Vietnam"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 0.95rem; color: #334155;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.35rem;">
+            Đường dẫn định danh (Slug URL):
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-family: monospace; color: #64748b; font-size: 0.9rem;">/films/</span>
+            <input 
+              type="text" 
+              id="film-slug-input" 
+              placeholder="a-tale-of-king-kong"
+              style="width: 100%; max-width: 400px; padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; font-family: monospace; background: #f8fafc;"
+            />
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Stat 2 -->
-    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-      <div style="width: 48px; height: 48px; border-radius: 10px; background: #dcfce7; color: #166534; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-        ✓
-      </div>
-      <div>
-        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Đã hoàn thành</div>
-        <div style="font-size: 1.6rem; font-weight: 700; color: #166534; line-height: 1.2; margin-top: 0.15rem;">
-          {completedCount} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">phim</span>
+    <!-- PHẦN 2: CANVAS NỘI DUNG -->
+    <div class="card" style="padding: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            2. Canvas nội dung
+          </h3>
+          <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Bôi đen văn bản để đổi font size, màu sắc, căn lề, khoảng cách dòng.
+          </p>
         </div>
+      </div>
+
+      <!-- Rich Canvas Editor Frame -->
+      <div style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+          <!-- Font Size -->
+          <div class="tb-group">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Cỡ chữ:</label>
+            <select id="tb-fontsize" class="tb-select" title="Cỡ chữ">
+              <option value="14px">14px</option>
+              <option value="16px" selected>16px (Chuẩn)</option>
+              <option value="18px">18px</option>
+              <option value="20px">20px</option>
+              <option value="24px">24px</option>
+              <option value="28px">28px</option>
+              <option value="32px">32px</option>
+              <option value="40px">40px</option>
+            </select>
+          </div>
+
+          <!-- Color Picker -->
+          <div class="tb-group">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Màu:</label>
+            <input type="color" id="tb-color" value="#000000" style="width: 28px; height: 28px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Chọn màu chữ" />
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem;" onclick="document.execCommand('foreColor', false, '#000000');" title="Màu đen chuẩn">Đen</button>
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #64748b;" onclick="document.execCommand('foreColor', false, '#666666');" title="Màu xám">Xám</button>
+          </div>
+
+          <!-- Text Style Format -->
+          <div class="tb-group">
+            <button type="button" class="tb-btn" onclick="document.execCommand('bold', false, '');" title="In đậm (Bold)"><b>B</b></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('italic', false, '');" title="In nghiêng (Italic)"><i>I</i></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('underline', false, '');" title="Gạch chân (Underline)"><u>U</u></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('strikeThrough', false, '');" title="Gạch ngang (Strikethrough)"><s>S</s></button>
+          </div>
+
+          <!-- Alignment -->
+          <div class="tb-group">
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyLeft', false, '');" title="Căn trái">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+            </button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyCenter', false, '');" title="Căn giữa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+            </button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyRight', false, '');" title="Căn phải">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            </button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyFull', false, '');" title="Căn đều 2 bên (Justify)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Line Height -->
+          <div class="tb-group">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Giãn dòng:</label>
+            <select id="tb-lineheight" class="tb-select" title="Khoảng cách dòng trên dưới">
+              <option value="1.2">1.2 (Hẹp)</option>
+              <option value="1.4">1.4</option>
+              <option value="1.6" selected>1.6 (Chuẩn)</option>
+              <option value="1.8">1.8 (Rộng)</option>
+              <option value="2.0">2.0</option>
+              <option value="2.4">2.4</option>
+            </select>
+          </div>
+
+          <!-- Paragraph Margin -->
+          <div class="tb-group">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Cách đoạn:</label>
+            <select id="tb-paramargin" class="tb-select" title="Khoảng cách đoạn trên dưới">
+              <option value="8px">8px (Nhỏ)</option>
+              <option value="16px">16px</option>
+              <option value="24px" selected>24px (Chuẩn)</option>
+              <option value="36px">36px (Rộng)</option>
+            </select>
+          </div>
+
+          <!-- Insert Image Action Button -->
+          <div>
+            <button type="button" id="btn-insert-image" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; padding: 0.35rem 0.85rem; gap: 0.4rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Insert ảnh (Upload R2 / Link / Crop)
+            </button>
+          </div>
+        </div>
+
+        <!-- Editable Content Area -->
+        <div id="canvas-editor" contenteditable="true" spellcheck="false">
+          <!-- Initial film content injected here -->
+        </div>
+      </div>
+
+      <!-- Floating Image Controls Tooltip (Shown when an image is clicked in Canvas) -->
+      <div id="img-floating-toolbar" style="display: none; position: absolute; background: #0f172a; color: #fff; border-radius: 0.375rem; padding: 0.35rem 0.5rem; gap: 0.4rem; align-items: center; z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-size: 0.82rem;">
+        <span style="font-weight: 600; color: #94a3b8; padding-right: 0.35rem; border-right: 1px solid #334155;">Size:</span>
+        <button type="button" class="btn-img-size tb-btn" data-size="25%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">25%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="50%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">50%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="75%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">75%</button>
+        <button type="button" class="btn-img-size tb-btn" data-size="100%" style="height: 24px; padding: 0 0.35rem; font-size: 0.75rem;">100%</button>
+        <span style="height: 14px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+        <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 24px; padding: 0 0.5rem; font-size: 0.75rem;">✕ Xóa ảnh</button>
       </div>
     </div>
 
-    <!-- Stat 3 -->
-    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-      <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffedd5; color: #9a3412; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-        ⏳
-      </div>
-      <div>
-        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Hậu kỳ & Phát triển</div>
-        <div style="font-size: 1.6rem; font-weight: 700; color: #9a3412; line-height: 1.2; margin-top: 0.15rem;">
-          {postProdCount + developingCount} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">phim</span>
+    <!-- PHẦN 3: CREDIT CREW -->
+    <div class="card" style="padding: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+            3. Credit crew
+          </h3>
+          <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+            Gồm 2 phần: Role và Tên. Để ô trống tự do điền, có thể thêm người tùy ý.
+          </p>
         </div>
+        <button type="button" id="btn-add-credit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.85rem;">
+          + Thêm người
+        </button>
       </div>
-    </div>
 
-    <!-- Stat 4 -->
-    <div class="card" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-      <div style="width: 48px; height: 48px; border-radius: 10px; background: #f1f5f9; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-        📸
-      </div>
-      <div>
-        <div style="font-size: 0.82rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Ảnh tư liệu & Stills</div>
-        <div style="font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1.2; margin-top: 0.15rem;">
-          {totalStills} <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">hình ảnh</span>
-        </div>
+      <!-- Credit rows container -->
+      <div id="credits-list" style="display: flex; flex-direction: column; gap: 0.65rem;">
+        <!-- Rows will be populated by script -->
       </div>
     </div>
   </div>
 
-  <!-- Films Table / Cards List -->
-  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-    {films.map((film, index) => {
-      const catStyle = getCategoryBadge(film.category);
-      const statusStyle = getStatusBadge(film.year);
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: INSERT & CROP IMAGE (Upload to R2 / Paste Link / Preview / Crop) -->
+  <!-- ========================================================================= -->
+  <div id="image-modal" class="modal-overlay">
+    <div class="modal-card">
+      <!-- Modal Header -->
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">
+            Chèn & Chỉnh sửa ảnh (Crop tùy thích)
+          </h3>
+          <p style="font-size: 0.82rem; color: #64748b; margin: 0.15rem 0 0 0;">
+            Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi insert.
+          </p>
+        </div>
+        <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">✕</button>
+      </div>
 
-      return (
-        <div class="card" style="padding: 1.5rem; transition: transform 0.15s, box-shadow 0.15s; border: 1px solid #e2e8f0;">
-          <div style="display: flex; gap: 1.75rem; align-items: flex-start;">
-            <!-- Film Index Badge -->
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.25rem;">
-              {index + 1}
+      <!-- Modal Body -->
+      <div style="padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem;">
+        <!-- Input Choice: Upload vs Link -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
+          <!-- Option A: Upload to R2 -->
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #0f172a; margin-bottom: 0.4rem;">
+              Cách 1: Tải ảnh từ máy tính (lên R2)
+            </label>
+            <input type="file" id="modal-file-input" accept="image/*" style="font-size: 0.85rem;" />
+            <div id="modal-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.25rem; font-weight: 600;">
+              ⏳ Đang tải ảnh lên Cloudflare R2...
             </div>
+          </div>
 
-            <!-- Thumbnail Poster Preview -->
-            <div style="width: 170px; height: 105px; border-radius: 0.5rem; overflow: hidden; background: #0f172a; flex-shrink: 0; position: relative; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
-              {film.thumbnail ? (
-                <img 
-                  src={film.thumbnail} 
-                  alt={film.title}
-                  style="width: 100%; height: 100%; object-fit: cover;"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                />
-              ) : null}
-              <div style={`width: 100%; height: 100%; display: ${film.thumbnail ? 'none' : 'flex'}; align-items: center; justify-content: center; color: #64748b; font-size: 0.75rem;`}>
-                Chưa có ảnh
-              </div>
-            </div>
-
-            <!-- Film Main Details -->
-            <div style="flex: 1; min-width: 0;">
-              <!-- Title Row -->
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem;">
-                <div style="display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;">
-                  <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
-                    {film.title}
-                  </h2>
-                  {film.originalTitle && (
-                    <span style="font-size: 1rem; color: #64748b; font-style: italic;">
-                      ({film.originalTitle})
-                    </span>
-                  )}
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                  <a 
-                    href={`/films/${film.slug}`} 
-                    target="_blank" 
-                    class="btn btn-outline" 
-                    style="padding: 0.4rem 0.75rem; font-size: 0.82rem;"
-                    title="Mở xem trên giao diện người dùng"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    Xem ngoài web
-                  </a>
-                  <a 
-                    href={`/admin/films/sua/${film.slug}`} 
-                    class="btn btn-primary" 
-                    style="padding: 0.4rem 0.85rem; font-size: 0.82rem;"
-                    title="Chỉnh sửa thông tin phim"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    Chỉnh sửa
-                  </a>
-                </div>
-              </div>
-
-              <!-- Badges Row: Category, Year/Stage, Duration -->
-              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
-                <!-- Category Badge -->
-                <span style={`padding: 0.2rem 0.6rem; border-radius: 0.375rem; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: ${catStyle.bg}; color: ${catStyle.text}; border: 1px solid ${catStyle.border};`}>
-                  {film.category}
-                </span>
-
-                <!-- Status / Stage Badge -->
-                <span style={`padding: 0.2rem 0.6rem; border-radius: 0.375rem; font-size: 0.78rem; font-weight: 600; background: ${statusStyle.bg}; color: ${statusStyle.text};`}>
-                  ● {statusStyle.label}
-                </span>
-
-                <!-- Year & Duration -->
-                <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
-                  Năm: <strong style="color: #334155;">{film.year}</strong>
-                </span>
-
-                {film.duration && (
-                  <>
-                    <span style="color: #cbd5e1;">•</span>
-                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
-                      Thời lượng: <strong style="color: #334155;">{film.duration}</strong>
-                    </span>
-                  </>
-                )}
-
-                <span style="color: #cbd5e1;">•</span>
-                <span style="font-size: 0.82rem; color: #94a3b8; font-family: monospace;">
-                  /films/{film.slug}
-                </span>
-              </div>
-
-              <!-- Technical Format Specification -->
-              <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.65rem; background: #f8fafc; padding: 0.4rem 0.75rem; border-radius: 0.375rem; border: 1px solid #f1f5f9; display: inline-block;">
-                <span style="color: #64748b; font-weight: 600;">Quy cách:</span> {film.format}
-              </div>
-
-              <!-- Synopsis Snippet -->
-              <p style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin-bottom: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                {film.synopsis}
-              </p>
-
-              <!-- Gallery & Credits Count Tags -->
-              <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; font-size: 0.82rem; color: #64748b;">
-                <div style="display: flex; align-items: center; gap: 1.25rem;">
-                  <!-- Stills Counter & Mini Thumbnails -->
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span>📸 <strong>{film.stills?.length || 0}</strong> ảnh stills</span>
-                    <div style="display: flex; gap: 4px;">
-                      {film.stills?.slice(0, 4).map((st, sIdx) => (
-                        <img 
-                          src={st} 
-                          alt={`still ${sIdx}`} 
-                          style="width: 28px; height: 18px; object-fit: cover; border-radius: 2px; border: 1px solid #cbd5e1;" 
-                        />
-                      ))}
-                      {(film.stills?.length || 0) > 4 && (
-                        <span style="font-size: 0.75rem; background: #f1f5f9; padding: 0 4px; border-radius: 2px; line-height: 18px;">
-                          +{film.stills.length - 4}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <!-- Credits Counter -->
-                  <div>
-                    👥 <strong>{film.credits?.length || 0}</strong> vai trò ekip ({film.credits?.[0]?.role}: {film.credits?.[0]?.names?.join(', ')})
-                  </div>
-                </div>
-
-                <a 
-                  href={`/admin/films/sua/${film.slug}`} 
-                  style="color: #0284c7; font-weight: 600; text-decoration: none; font-size: 0.82rem;"
-                >
-                  Xem chi tiết & sửa →
-                </a>
-              </div>
+          <!-- Option B: Paste link -->
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #0f172a; margin-bottom: 0.4rem;">
+              Cách 2: Dán đường dẫn ảnh (R2 / Web)
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="modal-link-input" placeholder="https://storage.hiepcm.com/..." style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+              <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;">Tải ảnh</button>
             </div>
           </div>
         </div>
-      );
-    })}
+
+        <!-- Preview & Crop Workspace -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">
+              Khung Preview & Crop ảnh tự do (Kéo thả 4 góc tùy thích):
+            </span>
+            <!-- Cropper Controls -->
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" id="btn-crop-rotate" class="tb-btn" style="font-size: 0.8rem;" title="Xoay ảnh 90 độ">🔄 Xoay 90°</button>
+              <button type="button" id="btn-crop-reset" class="tb-btn" style="font-size: 0.8rem;" title="Đặt lại khung crop">↺ Reset</button>
+            </div>
+          </div>
+
+          <div style="width: 100%; height: 380px; background: #0f172a; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
+            <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
+              Chưa có ảnh. Vui lòng chọn file tải lên hoặc dán link ảnh từ R2 vào ô phía trên để bắt đầu Preview & Crop.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; background: #f8fafc;">
+        <button type="button" id="btn-modal-cancel" class="btn btn-outline">
+          Cancel (Hủy)
+        </button>
+        <button type="button" id="btn-modal-save" class="btn btn-primary" style="background: #0284c7;" disabled>
+          Save & Chèn vào Canvas
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: FULL WEBSITE PREVIEW (Xem trước toàn bộ website trước khi lưu)    -->
+  <!-- ========================================================================= -->
+  <div id="preview-modal" class="modal-overlay" style="padding: 0; background: #ffffff;">
+    <div style="width: 100%; height: 100vh; display: flex; flex-direction: column;">
+      <!-- Floating Top Control Bar -->
+      <div style="height: 54px; background: #0f172a; color: #ffffff; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1px solid #1e293b;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e;"></span>
+          Chế độ xem trước toàn bộ website (Full Live Preview)
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" id="btn-preview-close" class="btn btn-outline" style="color: #ffffff; border-color: #475569; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+            ✕ Đóng Preview
+          </button>
+          <button type="button" id="btn-preview-save-direct" class="btn btn-primary" style="background: #0284c7; padding: 0.35rem 1rem; font-size: 0.82rem;">
+            💾 Lưu ngay phim này
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Body (Exact mimic of the live website) -->
+      <div style="flex: 1; overflow-y: auto; display: flex; background: #ffffff;">
+        <!-- Left Sidebar (Mimics Layout.astro) -->
+        <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; border-right: none; background: #ffffff;">
+          <nav style="display: flex; flex-direction: column;">
+            <div style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin-bottom: 0.65rem;">
+              Films
+            </div>
+            <ul id="preview-sidebar-films" style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0; margin-bottom: 2.25rem;">
+              <!-- Dynamic film items -->
+            </ul>
+            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+              <span style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em;">About</span>
+              <span style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em;">CV</span>
+            </div>
+          </nav>
+        </aside>
+
+        <!-- Main Content Mimic (Mimics /films/[slug].astro) -->
+        <main style="flex: 1; min-width: 0; padding: 75px 60px 100px 30px; background: #ffffff;">
+          <div style="display: flex; align-items: flex-start; gap: clamp(60px, 6vw, 100px); width: 100%;">
+            <!-- Content Column -->
+            <div style="max-width: 840px; width: 100%; display: flex; flex-direction: column;">
+              <h1 id="preview-film-title" style="font-family: 'Fraunces', Georgia, serif; font-size: 1.85rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
+                <!-- Film title -->
+              </h1>
+
+              <p id="preview-film-format" style="font-size: 0.92rem; color: #000000; margin-bottom: 28px;">
+                <!-- Film format -->
+              </p>
+
+              <div id="preview-canvas-render" style="font-size: 0.95rem; line-height: 1.6; color: #000000;">
+                <!-- Canvas HTML content -->
+              </div>
+            </div>
+
+            <!-- Credits Column -->
+            <aside id="preview-film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px;">
+              <!-- Film credits -->
+            </aside>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw initial films data for client-side JavaScript -->
+  <script id="raw-films-data" type="application/json" set:html={JSON.stringify(films)}></script>
+
+  <!-- ========================================================================= -->
+  <!-- CLIENT JAVASCRIPT LOGIC                                                   -->
+  <!-- ========================================================================= -->
+  <script is:inline>
+    // 1. Data initialization
+    const rawFilmsElement = document.getElementById('raw-films-data');
+    let allFilms = JSON.parse(rawFilmsElement ? rawFilmsElement.textContent : '[]');
+    let currentFilmSlug = allFilms[0] ? allFilms[0].slug : '';
+
+    // DOM Elements
+    const selector = document.getElementById('film-selector');
+    const titleInput = document.getElementById('film-title-input');
+    const formatInput = document.getElementById('film-format-input');
+    const slugInput = document.getElementById('film-slug-input');
+    const canvasEditor = document.getElementById('canvas-editor');
+    const creditsList = document.getElementById('credits-list');
+    const addCreditBtn = document.getElementById('btn-add-credit');
+    const saveFilmBtn = document.getElementById('btn-save-film');
+    const viewLiveBtn = document.getElementById('btn-view-live');
+    const saveStatusBanner = document.getElementById('save-status-banner');
+
+    // Toolbar Elements
+    const tbFontSize = document.getElementById('tb-fontsize');
+    const tbColor = document.getElementById('tb-color');
+    const tbLineHeight = document.getElementById('tb-lineheight');
+    const tbParaMargin = document.getElementById('tb-paramargin');
+    const btnInsertImage = document.getElementById('btn-insert-image');
+
+    // Image Modal Elements
+    const imgModal = document.getElementById('image-modal');
+    const modalCloseBtn = document.getElementById('btn-modal-close');
+    const modalCancelBtn = document.getElementById('btn-modal-cancel');
+    const modalSaveBtn = document.getElementById('btn-modal-save');
+    const modalFileInput = document.getElementById('modal-file-input');
+    const modalLinkInput = document.getElementById('modal-link-input');
+    const btnLoadLink = document.getElementById('btn-load-link');
+    const cropperTargetImg = document.getElementById('cropper-target-img');
+    const cropperPlaceholder = document.getElementById('cropper-empty-placeholder');
+    const modalUploadLoading = document.getElementById('modal-upload-loading');
+    const btnCropRotate = document.getElementById('btn-crop-rotate');
+    const btnCropReset = document.getElementById('btn-crop-reset');
+
+    // Floating Image Toolbar Elements
+    const imgFloatingToolbar = document.getElementById('img-floating-toolbar');
+    const btnImgDelete = document.getElementById('btn-img-delete');
+    let selectedImageElement = null;
+
+    // Full Preview Elements
+    const previewModal = document.getElementById('preview-modal');
+    const btnOpenPreview = document.getElementById('btn-open-preview');
+    const btnPreviewClose = document.getElementById('btn-preview-close');
+    const btnPreviewSaveDirect = document.getElementById('btn-preview-save-direct');
+    const previewFilmTitle = document.getElementById('preview-film-title');
+    const previewFilmFormat = document.getElementById('preview-film-format');
+    const previewCanvasRender = document.getElementById('preview-canvas-render');
+    const previewFilmCredits = document.getElementById('preview-film-credits');
+    const previewSidebarFilms = document.getElementById('preview-sidebar-films');
+
+    let cropper = null;
+    let savedSelectionRange = null;
+
+    // 2. Load Film Data into Canvas Form
+    function loadFilm(slug) {
+      if (slug === '__NEW_FILM__') {
+        // Reset form for brand new film
+        currentFilmSlug = '';
+        titleInput.value = '';
+        formatInput.value = '';
+        slugInput.value = '';
+        canvasEditor.innerHTML = '<p>Bắt đầu viết nội dung phim tại đây...</p>';
+        renderCredits([{ role: 'Directed by', name: 'Cầm Đức Hiệp' }]);
+        viewLiveBtn.style.display = 'none';
+        return;
+      }
+
+      const film = allFilms.find(f => f.slug === slug);
+      if (!film) return;
+
+      currentFilmSlug = film.slug;
+      titleInput.value = film.title || '';
+      formatInput.value = film.format || '';
+      slugInput.value = film.slug || '';
+      canvasEditor.innerHTML = film.content_html || '<p></p>';
+      
+      const credits = film.credits && film.credits.length > 0
+        ? film.credits.map(c => ({
+            role: c.role || '',
+            name: Array.isArray(c.names) ? c.names.join(', ') : (c.name || c.names || '')
+          }))
+        : [{ role: 'Directed by', name: 'Cầm Đức Hiệp' }];
+
+      renderCredits(credits);
+
+      viewLiveBtn.href = `/films/${film.slug}`;
+      viewLiveBtn.style.display = 'inline-flex';
+    }
+
+    // 3. Render Credits Rows
+    function renderCredits(credits) {
+      creditsList.innerHTML = '';
+      if (!credits || credits.length === 0) {
+        credits = [{ role: '', name: '' }];
+      }
+
+      credits.forEach((cr, idx) => {
+        const row = document.createElement('div');
+        row.className = 'credit-row';
+        row.style.cssText = 'display: grid; grid-template-columns: 240px 1fr 38px; gap: 0.75rem; align-items: center;';
+        row.innerHTML = `
+          <input type="text" placeholder="Role (e.g. Directed by)" value="${cr.role || ''}" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+          <input type="text" placeholder="Tên thành viên (e.g. Cầm Đức Hiệp)" value="${cr.name || ''}" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+          <button type="button" class="btn-del-credit tb-btn btn-danger" style="height: 38px; width: 38px; border-radius: 0.375rem; padding: 0; font-size: 1rem;" title="Xóa người này">✕</button>
+        `;
+
+        row.querySelector('.btn-del-credit').addEventListener('click', () => {
+          row.remove();
+          if (creditsList.children.length === 0) {
+            renderCredits([{ role: '', name: '' }]);
+          }
+        });
+
+        creditsList.appendChild(row);
+      });
+    }
+
+    // Add Credit Row
+    addCreditBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'credit-row';
+      row.style.cssText = 'display: grid; grid-template-columns: 240px 1fr 38px; gap: 0.75rem; align-items: center;';
+      row.innerHTML = `
+        <input type="text" placeholder="Role (e.g. Producer)" value="" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+        <input type="text" placeholder="Tên thành viên" value="" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+        <button type="button" class="btn-del-credit tb-btn btn-danger" style="height: 38px; width: 38px; border-radius: 0.375rem; padding: 0; font-size: 1rem;" title="Xóa người này">✕</button>
+      `;
+      row.querySelector('.btn-del-credit').addEventListener('click', () => {
+        row.remove();
+      });
+      creditsList.appendChild(row);
+    });
+
+    // Film selection change
+    selector.addEventListener('change', (e) => {
+      loadFilm(e.target.value);
+    });
+
+    // Auto-generate slug when creating new film
+    titleInput.addEventListener('input', () => {
+      if (selector.value === '__NEW_FILM__') {
+        const rawTitle = titleInput.value.split('|')[0] || titleInput.value;
+        const genSlug = rawTitle
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[đĐ]/g, 'd')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        slugInput.value = genSlug;
+      }
+    });
+
+    // 4. Formatting Tools Implementation
+    // Font size change
+    tbFontSize.addEventListener('change', (e) => {
+      const size = e.target.value;
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      const span = document.createElement('span');
+      span.style.fontSize = size;
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+    });
+
+    // Color change
+    tbColor.addEventListener('input', (e) => {
+      document.execCommand('foreColor', false, e.target.value);
+    });
+
+    // Line height change
+    tbLineHeight.addEventListener('change', (e) => {
+      const lh = e.target.value;
+      canvasEditor.style.lineHeight = lh;
+      const selection = window.getSelection();
+      if (selection.anchorNode) {
+        let parent = selection.anchorNode.parentElement;
+        while (parent && parent !== canvasEditor) {
+          if (parent.tagName === 'P' || parent.tagName === 'DIV') {
+            parent.style.lineHeight = lh;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+      }
+    });
+
+    // Paragraph margin change
+    tbParaMargin.addEventListener('change', (e) => {
+      const margin = e.target.value;
+      const pElements = canvasEditor.querySelectorAll('p');
+      pElements.forEach(p => {
+        p.style.marginBottom = margin;
+      });
+    });
+
+    // 5. Image Modal & Crop System
+    btnInsertImage.addEventListener('click', () => {
+      // Save current cursor position in canvas
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        savedSelectionRange = sel.getRangeAt(0).cloneRange();
+      }
+      openImageModal();
+    });
+
+    function openImageModal() {
+      imgModal.style.display = 'flex';
+      modalSaveBtn.disabled = true;
+      cropperTargetImg.style.display = 'none';
+      cropperPlaceholder.style.display = 'block';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    }
+
+    function closeImageModal() {
+      imgModal.style.display = 'none';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    }
+
+    modalCloseBtn.addEventListener('click', closeImageModal);
+    modalCancelBtn.addEventListener('click', closeImageModal);
+
+    // Initialize Cropper on an image URL
+    function setupCropper(srcUrl) {
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+
+      cropperPlaceholder.style.display = 'none';
+      cropperTargetImg.src = srcUrl;
+      cropperTargetImg.style.display = 'block';
+
+      cropper = new Cropper(cropperTargetImg, {
+        aspectRatio: NaN, // Free crop, no aspect ratio restrictions!
+        viewMode: 1,
+        autoCropArea: 0.9,
+        responsive: true,
+        background: false,
+        ready() {
+          modalSaveBtn.disabled = false;
+        }
+      });
+    }
+
+    // A: File Input (Upload to R2)
+    modalFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      modalUploadLoading.style.display = 'block';
+
+      // 1. Immediately preview for cropping
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        setupCropper(loadEvt.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      // 2. Also send to R2 upload endpoint
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success && data.url) {
+          modalLinkInput.value = data.url;
+        }
+      } catch (err) {
+        console.warn('R2 background upload error:', err);
+      } finally {
+        modalUploadLoading.style.display = 'none';
+      }
+    });
+
+    // B: Link Input (Load link)
+    btnLoadLink.addEventListener('click', () => {
+      const url = modalLinkInput.value.trim();
+      if (!url) {
+        alert('Vui lòng dán link ảnh từ R2 hoặc Web vào ô nhập liệu.');
+        return;
+      }
+      setupCropper(url);
+    });
+
+    // Crop Rotate Button
+    btnCropRotate.addEventListener('click', () => {
+      if (cropper) cropper.rotate(90);
+    });
+
+    // Crop Reset Button
+    btnCropReset.addEventListener('click', () => {
+      if (cropper) cropper.reset();
+    });
+
+    // Save & Insert Cropped Image into Canvas
+    modalSaveBtn.addEventListener('click', async () => {
+      if (!cropper) return;
+
+      modalSaveBtn.disabled = true;
+      modalSaveBtn.innerText = 'Đang xử lý ảnh...';
+
+      // Get cropped canvas
+      const croppedCanvas = cropper.getCroppedCanvas();
+      
+      // Upload cropped result to R2
+      croppedCanvas.toBlob(async (blob) => {
+        let finalImageUrl = '';
+
+        if (blob) {
+          const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
+          const formData = new FormData();
+          formData.append('file', croppedFile);
+
+          try {
+            const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+            const uploadData = await uploadRes.json();
+            if (uploadData.success && uploadData.url) {
+              finalImageUrl = uploadData.url;
+            }
+          } catch (e) {
+            console.warn('Could not upload cropped blob to R2, falling back to data URL:', e);
+          }
+        }
+
+        if (!finalImageUrl) {
+          finalImageUrl = croppedCanvas.toDataURL('image/png');
+        }
+
+        // Insert into Canvas at cursor position
+        canvasEditor.focus();
+        if (savedSelectionRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedSelectionRange);
+        }
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.style.cssText = 'text-align: center; margin: 16px 0;';
+        const img = document.createElement('img');
+        img.src = finalImageUrl;
+        img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
+        imgWrapper.appendChild(img);
+
+        // Add spacing paragraph after image
+        const pAfter = document.createElement('p');
+        pAfter.innerHTML = '<br/>';
+
+        if (savedSelectionRange) {
+          savedSelectionRange.insertNode(pAfter);
+          savedSelectionRange.insertNode(imgWrapper);
+        } else {
+          canvasEditor.appendChild(imgWrapper);
+          canvasEditor.appendChild(pAfter);
+        }
+
+        closeImageModal();
+        modalSaveBtn.disabled = false;
+        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+      }, 'image/png');
+    });
+
+    // 6. Resizable & Clickable Images in Canvas
+    canvasEditor.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target.tagName === 'IMG') {
+        if (selectedImageElement) {
+          selectedImageElement.classList.remove('selected-img');
+        }
+        selectedImageElement = target;
+        selectedImageElement.classList.add('selected-img');
+
+        // Position floating toolbar above image
+        const rect = target.getBoundingClientRect();
+        imgFloatingToolbar.style.display = 'flex';
+        imgFloatingToolbar.style.top = `${window.scrollY + rect.top - 42}px`;
+        imgFloatingToolbar.style.left = `${window.scrollX + rect.left}px`;
+      } else {
+        if (selectedImageElement) {
+          selectedImageElement.classList.remove('selected-img');
+          selectedImageElement = null;
+        }
+        imgFloatingToolbar.style.display = 'none';
+      }
+    });
+
+    // Floating toolbar size buttons
+    document.querySelectorAll('.btn-img-size').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (selectedImageElement) {
+          const size = btn.getAttribute('data-size');
+          selectedImageElement.style.width = size;
+          selectedImageElement.style.maxWidth = '100%';
+        }
+      });
+    });
+
+    // Floating toolbar delete button
+    btnImgDelete.addEventListener('click', () => {
+      if (selectedImageElement) {
+        const parent = selectedImageElement.parentElement;
+        selectedImageElement.remove();
+        if (parent && parent.children.length === 0) {
+          parent.remove();
+        }
+        selectedImageElement = null;
+        imgFloatingToolbar.style.display = 'none';
+      }
+    });
+
+    // 7. Full Website Preview Modal
+    btnOpenPreview.addEventListener('click', () => {
+      // 1. Populate sidebar films
+      previewSidebarFilms.innerHTML = '';
+      allFilms.forEach(f => {
+        const li = document.createElement('li');
+        const isCurrent = f.slug === slugInput.value.trim();
+        li.innerHTML = `
+          <span style="font-size: 0.92rem; display: block; ${isCurrent ? 'color: #000; opacity: 0.35;' : 'color: #000; opacity: 1; font-weight: 500;'}">
+            ${f.title.split('|')[0].trim()}
+          </span>
+        `;
+        previewSidebarFilms.appendChild(li);
+      });
+
+      // 2. Populate title & format
+      previewFilmTitle.innerText = titleInput.value.trim() || 'Chưa đặt tiêu đề';
+      previewFilmFormat.innerText = formatInput.value.trim() || '';
+
+      // 3. Populate Canvas HTML content
+      previewCanvasRender.innerHTML = canvasEditor.innerHTML;
+
+      // 4. Populate Credits column
+      previewFilmCredits.innerHTML = '';
+      const creditRows = creditsList.querySelectorAll('.credit-row');
+      creditRows.forEach(row => {
+        const role = row.querySelector('.credit-role').value.trim();
+        const name = row.querySelector('.credit-name').value.trim();
+        if (role || name) {
+          const div = document.createElement('div');
+          div.style.cssText = 'display: flex; flex-direction: column; gap: 1px;';
+          div.innerHTML = `
+            <div style="font-size: 0.88rem; color: #666666; font-weight: 400;">${role}</div>
+            <div style="font-size: 0.92rem; color: #000000; font-weight: 400;">${name}</div>
+          `;
+          previewFilmCredits.appendChild(div);
+        }
+      });
+
+      // Open Modal
+      previewModal.style.display = 'block';
+    });
+
+    btnPreviewClose.addEventListener('click', () => {
+      previewModal.style.display = 'none';
+    });
+
+    btnPreviewSaveDirect.addEventListener('click', () => {
+      saveFilmAction();
+      previewModal.style.display = 'none';
+    });
+
+    // 8. Save Film to CMS Action
+    async function saveFilmAction() {
+      const slug = slugInput.value.trim();
+      const title = titleInput.value.trim();
+      const format = formatInput.value.trim();
+      const contentHtml = canvasEditor.innerHTML;
+
+      if (!title || !slug) {
+        alert('Vui lòng nhập đầy đủ Tiêu đề và Slug của phim.');
+        return;
+      }
+
+      saveFilmBtn.disabled = true;
+      saveFilmBtn.innerText = 'Đang lưu vào CMS...';
+      saveStatusBanner.style.display = 'none';
+
+      // Gather credits
+      const credits = [];
+      const rows = creditsList.querySelectorAll('.credit-row');
+      rows.forEach(r => {
+        const role = r.querySelector('.credit-role').value.trim();
+        const name = r.querySelector('.credit-name').value.trim();
+        if (role || name) {
+          credits.push({ role, name });
+        }
+      });
+
+      const payload = {
+        slug,
+        title,
+        format,
+        content_html: contentHtml,
+        credits
+      };
+
+      try {
+        const res = await fetch('/api/films/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          saveStatusBanner.style.display = 'block';
+          saveStatusBanner.style.background = '#dcfce7';
+          saveStatusBanner.style.color = '#166534';
+          saveStatusBanner.style.border = '1px solid #bbf7d0';
+          saveStatusBanner.innerHTML = `
+            ✓ Đã lưu thành công vào CMS! Tác phẩm <strong>"${title}"</strong> đã được cập nhật trực tiếp ra website.
+            <a href="/films/${slug}" target="_blank" style="margin-left: 1rem; color: #0284c7; font-weight: 700; text-decoration: underline;">
+              Xem trang phim ngay ↗
+            </a>
+          `;
+
+          // Update local memory
+          const existingIdx = allFilms.findIndex(f => f.slug === slug);
+          if (existingIdx >= 0) {
+            allFilms[existingIdx] = data.film;
+          } else {
+            allFilms.push(data.film);
+            // Add option to selector
+            const opt = document.createElement('option');
+            opt.value = slug;
+            opt.innerText = title;
+            selector.insertBefore(opt, selector.lastElementChild);
+            selector.value = slug;
+          }
+
+          viewLiveBtn.href = `/films/${slug}`;
+          viewLiveBtn.style.display = 'inline-flex';
+        } else {
+          saveStatusBanner.style.display = 'block';
+          saveStatusBanner.style.background = '#fee2e2';
+          saveStatusBanner.style.color = '#991b1b';
+          saveStatusBanner.style.border = '1px solid #ef4444';
+          saveStatusBanner.innerText = data.error || 'Có lỗi xảy ra khi lưu phim.';
+        }
+      } catch (err) {
+        saveStatusBanner.style.display = 'block';
+        saveStatusBanner.style.background = '#fee2e2';
+        saveStatusBanner.style.color = '#991b1b';
+        saveStatusBanner.style.border = '1px solid #ef4444';
+        saveStatusBanner.innerText = 'Lỗi kết nối máy chủ.';
+      } finally {
+        saveFilmBtn.disabled = false;
+        saveFilmBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Lưu thay đổi (Save)
+        `;
+      }
+    }
+
+    saveFilmBtn.addEventListener('click', saveFilmAction);
+
+    // Initial load first film
+    if (allFilms && allFilms.length > 0) {
+      loadFilm(allFilms[0].slug);
+    }
+  </script>
 </AdminLayout>

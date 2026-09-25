@@ -39,8 +39,8 @@ const currentPath = Astro.url.pathname;
         --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
         --font-serif: 'Fraunces', Georgia, serif;
         --color-bg: #ffffff;
-        --color-text: #000000;
-        --color-muted: #666666;
+        --color-text: #313030;
+        --color-muted: #545454;
       }
       * {
         box-sizing: border-box;
@@ -49,7 +49,7 @@ const currentPath = Astro.url.pathname;
       }
       html, body {
         background-color: #ffffff;
-        color: #000000;
+        color: #313030;
         font-family: var(--font-sans);
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
@@ -57,7 +57,7 @@ const currentPath = Astro.url.pathname;
         line-height: 1.6;
       }
       a {
-        color: #000000;
+        color: #313030;
         text-decoration: none !important;
       }
       /* Clean minimal scrollbar */
@@ -82,17 +82,21 @@ const currentPath = Astro.url.pathname;
       <!-- Left Sidebar (No border, clean spacing) -->
       <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; background: #ffffff;">
         <nav style="display: flex; flex-direction: column;">
-          <!-- Films Section Header: Khi được chọn (ở '/') thì MỜ ĐI (opacity 0.35), chưa chọn thì ĐẬM ĐEN (opacity 1) -->
+          <!-- Films Section Header -->
           <div style="margin-bottom: 0.65rem;">
             <a 
               href="/" 
-              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.2s; ${currentPath === '/' ? 'opacity: 0.35;' : 'opacity: 1;'}`}
+              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease, opacity 0.2s; ${
+                currentPath === '/' 
+                  ? 'color: #545454; font-weight: 400;' 
+                  : 'color: #313030; font-weight: 600;'
+              }`}
             >
               Films
             </a>
           </div>
 
-          <!-- Film Submenu: Khi ĐƯỢC CHỌN (isActive) -> MỜ ĐI (opacity: 0.35, font-weight: 400). Khi CHƯA CHỌN -> ĐẬM ĐEN (opacity: 1, font-weight: 500) -->
+          <!-- Film Submenu -->
           <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0; margin-bottom: 2.25rem;">
             {films.map((film) => {
               const isActive = currentPath === `/films/${film.slug}`;
@@ -100,13 +104,13 @@ const currentPath = Astro.url.pathname;
                 <li>
                   <a 
                     href={`/films/${film.slug}`} 
-                    style={`font-size: 0.92rem; text-decoration: none !important; transition: opacity 0.15s ease; display: block; ${
+                    style={`font-size: 0.92rem; text-decoration: none !important; transition: color 0.15s ease, opacity 0.15s ease; display: block; ${
                       isActive 
-                        ? 'color: #000000; opacity: 0.35; font-weight: 400;' 
-                        : 'color: #000000; opacity: 1; font-weight: 500;'
+                        ? 'color: #545454; font-weight: 400;' 
+                        : 'color: #313030; font-weight: 500;'
                     }`}
-                    onmouseover="this.style.opacity='0.65';"
-                    onmouseout={isActive ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
+                    onmouseover="this.style.color='#545454';"
+                    onmouseout={isActive ? "this.style.color='#545454';" : "this.style.color='#313030';"}
                   >
                     {film.title}
                   </a>
@@ -115,30 +119,30 @@ const currentPath = Astro.url.pathname;
             })}
           </ul>
 
-          <!-- About & CV Links: Khi được chọn thì MỜ ĐI, chưa chọn thì ĐẬM ĐEN -->
+          <!-- About & CV Links -->
           <div style="display: flex; flex-direction: column; gap: 0.65rem;">
             <a 
               href="/about" 
-              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.15s ease; ${
+              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
                 currentPath === '/about' 
-                  ? 'opacity: 0.35;' 
-                  : 'opacity: 1;'
+                  ? 'color: #545454; font-weight: 400;' 
+                  : 'color: #313030; font-weight: 600;'
               }`}
-              onmouseover="this.style.opacity='0.65';"
-              onmouseout={currentPath === '/about' ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
+              onmouseover="this.style.color='#545454';"
+              onmouseout={currentPath === '/about' ? "this.style.color='#545454';" : "this.style.color='#313030';"}
             >
               About
             </a>
 
             <a 
               href="/cv" 
-              style={`font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; text-decoration: none !important; transition: opacity 0.15s ease; ${
+              style={`font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; text-decoration: none !important; transition: color 0.15s ease; ${
                 currentPath === '/cv' 
-                  ? 'opacity: 0.35;' 
-                  : 'opacity: 1;'
+                  ? 'color: #545454; font-weight: 400;' 
+                  : 'color: #313030; font-weight: 600;'
               }`}
-              onmouseover="this.style.opacity='0.65';"
-              onmouseout={currentPath === '/cv' ? "this.style.opacity='0.35';" : "this.style.opacity='1';"}
+              onmouseover="this.style.color='#545454';"
+              onmouseout={currentPath === '/cv' ? "this.style.color='#545454';" : "this.style.color='#313030';"}
             >
               CV
             </a>

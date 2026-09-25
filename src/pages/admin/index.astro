@@ -50,7 +50,7 @@ const films = await getFilms(db);
       padding: 0.35rem 0.6rem;
       font-size: 0.85rem;
       font-weight: 600;
-      color: #334155;
+      color: #313030;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -62,7 +62,7 @@ const films = await getFilms(db);
     .tb-btn:hover:not(:disabled) {
       background: #f1f5f9;
       border-color: #94a3b8;
-      color: #0f172a;
+      color: #313030;
     }
     .tb-btn:disabled {
       opacity: 0.4;
@@ -72,9 +72,9 @@ const films = await getFilms(db);
       color: #94a3b8 !important;
     }
     .tb-btn.active {
-      background: #0f172a !important;
+      background: #313030 !important;
       color: #ffffff !important;
-      border-color: #0f172a !important;
+      border-color: #313030 !important;
     }
     .tb-select {
       background: #ffffff;
@@ -82,11 +82,11 @@ const films = await getFilms(db);
       border-radius: 0.35rem;
       padding: 0.35rem 0.6rem;
       font-size: 0.85rem;
-      color: #334155;
+      color: #313030;
       height: 32px;
       cursor: pointer;
     }
-    /* Canvas Area */
+    /* Canvas Area: Font Inter, Cỡ chữ 15px, Màu #313030 */
     #canvas-editor {
       min-height: 520px;
       padding: 2.25rem;
@@ -94,10 +94,10 @@ const films = await getFilms(db);
       border: 1px solid #cbd5e1;
       border-bottom-left-radius: 0.5rem;
       border-bottom-right-radius: 0.5rem;
-      font-family: 'Inter', system-ui, sans-serif;
-      font-size: 16px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
       line-height: 1.6;
-      color: #000000;
+      color: #313030;
       outline: none;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
       position: relative;
@@ -106,6 +106,9 @@ const films = await getFilms(db);
       border-color: #94a3b8;
     }
     #canvas-editor p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #313030;
       margin-bottom: 1.5rem;
       min-height: 1.5rem;
     }
@@ -150,7 +153,7 @@ const films = await getFilms(db);
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(49, 48, 48, 0.75);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -174,10 +177,10 @@ const films = await getFilms(db);
   <!-- Top Selection & Action Bar -->
   <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <span style="font-weight: 700; font-size: 1rem; color: #0f172a; white-space: nowrap;">
+      <span style="font-weight: 700; font-size: 1rem; color: #313030; white-space: nowrap;">
         🎬 Chọn phim cần sửa:
       </span>
-      <select id="film-selector" style="padding: 0.55rem 0.85rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 0.95rem; font-weight: 600; color: #0f172a; min-width: 300px; background: #f8fafc; cursor: pointer;">
+      <select id="film-selector" style="padding: 0.55rem 0.85rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 0.95rem; font-weight: 600; color: #313030; min-width: 300px; background: #f8fafc; cursor: pointer;">
         {films.map((f) => (
           <option value={f.slug}>{f.title}</option>
         ))}
@@ -187,17 +190,17 @@ const films = await getFilms(db);
 
     <!-- Action Buttons -->
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <button type="button" id="btn-open-preview" class="btn btn-outline" style="border-color: #0f172a; color: #0f172a; font-weight: 600;">
+      <button type="button" id="btn-open-preview" class="btn btn-outline" style="border-color: #313030; color: #313030; font-weight: 600;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         Preview toàn bộ web
       </button>
 
-      <a id="btn-view-live" href={`/films/${films[0]?.slug || ''}`} target="_blank" class="btn btn-secondary">
+      <a id="btn-view-live" href={`/films/${films[0]?.slug || ''}`} target="_blank" class="btn btn-secondary" style="color: #313030;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         Xem ngoài web ↗
       </a>
 
-      <button type="button" id="btn-save-film" class="btn btn-primary" style="background: #0284c7; padding: 0.6rem 1.4rem; font-size: 0.95rem;">
+      <button type="button" id="btn-save-film" class="btn btn-primary" style="background: #313030; padding: 0.6rem 1.4rem; font-size: 0.95rem;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Lưu thay đổi (Save)
       </button>
@@ -211,41 +214,41 @@ const films = await getFilms(db);
   <div style="display: flex; flex-direction: column; gap: 2rem;">
     <!-- PHẦN 1: TITLE & THÔNG TIN PHIM -->
     <div class="card" style="padding: 1.5rem;">
-      <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: #313030; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
         1. Tiêu đề & Thông tin phim
       </h3>
 
       <div style="display: flex; flex-direction: column; gap: 1.25rem;">
         <div>
-          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
-            Title phim: <span style="color: #64748b; font-weight: 400;">(Ví dụ: a tale of King Kong | sự tích con khỉ)</span>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Title phim: <span style="color: #545454; font-weight: 400;">(Font Fraunces - Cỡ chữ 25px - Ví dụ: a tale of King Kong | sự tích con khỉ)</span>
           </label>
           <input 
             type="text" 
             id="film-title-input" 
             placeholder="a tale of King Kong | sự tích con khỉ"
-            style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 1.15rem; font-weight: 600; color: #0f172a;"
+            style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Fraunces', Georgia, serif; font-size: 25px; font-weight: 400; color: #313030;"
           />
         </div>
 
         <div>
-          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem;">
-            Thông tin phim: <span style="color: #64748b; font-weight: 400;">(Điền chay, ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Thông tin phim: <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 16px - Ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
           </label>
           <input 
             type="text" 
             id="film-format-input" 
             placeholder="Essay film | 15' | 2027 | Vietnam"
-            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-size: 0.95rem; color: #334155;"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 16px; color: #545454;"
           />
         </div>
 
         <div>
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.35rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #545454; margin-bottom: 0.35rem;">
             Đường dẫn định danh (Slug URL):
           </label>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-family: monospace; color: #64748b; font-size: 0.9rem;">/films/</span>
+            <span style="font-family: monospace; color: #545454; font-size: 0.9rem;">/films/</span>
             <input 
               type="text" 
               id="film-slug-input" 
@@ -261,11 +264,11 @@ const films = await getFilms(db);
     <div class="card" style="padding: 1.5rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
         <div>
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #313030; margin: 0;">
             2. Canvas nội dung
           </h3>
-          <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Hỗ trợ <strong>Undo (Ctrl+Z) / Redo (Ctrl+Y)</strong> nếu thao tác nhầm lẫn. Ảnh có thể kéo thả đổi vị trí hoặc crop lại.
+          <p style="font-size: 0.85rem; color: #545454; margin-top: 0.25rem;">
+            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Font chuẩn <strong>Inter 15px</strong>, màu chính <strong>#313030</strong>.
           </p>
         </div>
       </div>
@@ -286,25 +289,26 @@ const films = await getFilms(db);
 
           <!-- Font Size -->
           <div class="tb-group">
-            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Cỡ chữ:</label>
+            <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Cỡ chữ:</label>
             <select id="tb-fontsize" class="tb-select" title="Cỡ chữ">
+              <option value="13px">13px (Credit chuẩn)</option>
               <option value="14px">14px</option>
-              <option value="16px" selected>16px (Chuẩn)</option>
+              <option value="15px" selected>15px (Canvas chuẩn)</option>
+              <option value="16px">16px (Thông số chuẩn)</option>
               <option value="18px">18px</option>
               <option value="20px">20px</option>
-              <option value="24px">24px</option>
+              <option value="25px">25px (Tiêu đề chuẩn)</option>
               <option value="28px">28px</option>
               <option value="32px">32px</option>
-              <option value="40px">40px</option>
             </select>
           </div>
 
-          <!-- Color Picker -->
+          <!-- Color Picker: Primary #313030, Secondary #545454 -->
           <div class="tb-group">
-            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Màu:</label>
-            <input type="color" id="tb-color" value="#000000" style="width: 28px; height: 28px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Chọn màu chữ" />
-            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem;" onclick="document.execCommand('foreColor', false, '#000000'); setTimeout(() => recordHistory(true), 50);" title="Màu đen chuẩn">Đen</button>
-            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #64748b;" onclick="document.execCommand('foreColor', false, '#666666'); setTimeout(() => recordHistory(true), 50);" title="Màu xám">Xám</button>
+            <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Màu:</label>
+            <input type="color" id="tb-color" value="#313030" style="width: 28px; height: 28px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Chọn màu chữ" />
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #313030;" onclick="document.execCommand('foreColor', false, '#313030'); setTimeout(() => recordHistory(true), 50);" title="Màu chính #313030">Chính</button>
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #545454;" onclick="document.execCommand('foreColor', false, '#545454'); setTimeout(() => recordHistory(true), 50);" title="Màu xám phụ #545454">Phụ</button>
           </div>
 
           <!-- Text Style Format -->
@@ -333,7 +337,7 @@ const films = await getFilms(db);
 
           <!-- Line Height -->
           <div class="tb-group">
-            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Giãn dòng:</label>
+            <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Giãn dòng:</label>
             <select id="tb-lineheight" class="tb-select" title="Khoảng cách dòng trên dưới">
               <option value="1.2">1.2 (Hẹp)</option>
               <option value="1.4">1.4</option>
@@ -346,7 +350,7 @@ const films = await getFilms(db);
 
           <!-- Paragraph Margin -->
           <div class="tb-group">
-            <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Cách đoạn:</label>
+            <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Cách đoạn:</label>
             <select id="tb-paramargin" class="tb-select" title="Khoảng cách đoạn trên dưới">
               <option value="8px">8px (Nhỏ)</option>
               <option value="16px">16px</option>
@@ -357,7 +361,7 @@ const films = await getFilms(db);
 
           <!-- Insert Image Action Button -->
           <div>
-            <button type="button" id="btn-insert-image" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; padding: 0.35rem 0.85rem; gap: 0.4rem;">
+            <button type="button" id="btn-insert-image" class="tb-btn" style="background: #313030; color: #ffffff; border-color: #313030; padding: 0.35rem 0.85rem; gap: 0.4rem;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               Insert ảnh mới (Upload R2 / Crop)
             </button>
@@ -371,24 +375,24 @@ const films = await getFilms(db);
       </div>
 
       <!-- Floating Image Controls Tooltip (Shown when an image is clicked in Canvas) -->
-      <div id="img-floating-toolbar" style="display: none; position: absolute; background: #0f172a; color: #fff; border-radius: 0.5rem; padding: 0.45rem 0.65rem; gap: 0.45rem; align-items: center; z-index: 100; box-shadow: 0 10px 20px -3px rgba(0,0,0,0.4); font-size: 0.82rem; border: 1px solid #334155;">
-        <span style="font-weight: 600; color: #94a3b8; padding-right: 0.35rem; border-right: 1px solid #334155;">Size:</span>
+      <div id="img-floating-toolbar" style="display: none; position: absolute; background: #313030; color: #fff; border-radius: 0.5rem; padding: 0.45rem 0.65rem; gap: 0.45rem; align-items: center; z-index: 100; box-shadow: 0 10px 20px -3px rgba(0,0,0,0.4); font-size: 0.82rem; border: 1px solid #545454;">
+        <span style="font-weight: 600; color: #cbd5e1; padding-right: 0.35rem; border-right: 1px solid #545454;">Size:</span>
         <button type="button" class="btn-img-size tb-btn" data-size="25%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">25%</button>
         <button type="button" class="btn-img-size tb-btn" data-size="50%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">50%</button>
         <button type="button" class="btn-img-size tb-btn" data-size="75%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">75%</button>
         <button type="button" class="btn-img-size tb-btn" data-size="100%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">100%</button>
         
-        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+        <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
         
         <!-- Re-crop button -->
-        <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
+        <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #545454; color: #ffffff; border-color: #545454; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
           ✂️ Crop lại ảnh
         </button>
 
-        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+        <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
 
         <!-- Position reordering buttons -->
-        <span style="font-weight: 600; color: #94a3b8; padding-right: 0.25rem;">Vị trí:</span>
+        <span style="font-weight: 600; color: #cbd5e1; padding-right: 0.25rem;">Vị trí:</span>
         <button type="button" id="btn-img-move-up" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển lên trên đoạn văn/ảnh liền trước">
           ⬆ Lên
         </button>
@@ -396,7 +400,7 @@ const films = await getFilms(db);
           ⬇ Xuống
         </button>
 
-        <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
+        <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
 
         <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;">
           🗑️ Xóa ảnh
@@ -408,14 +412,14 @@ const films = await getFilms(db);
     <div class="card" style="padding: 1.5rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
         <div>
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #313030; margin: 0;">
             3. Credit crew
           </h3>
-          <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-            Gồm 2 phần: Role và Tên. Để ô trống tự do điền, có thể thêm người tùy ý.
+          <p style="font-size: 0.85rem; color: #545454; margin-top: 0.25rem;">
+            Font Inter, cỡ chữ 13px. Gồm 2 phần: Role và Tên. Để ô trống tự do điền, có thể thêm người tùy ý.
           </p>
         </div>
-        <button type="button" id="btn-add-credit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.85rem;">
+        <button type="button" id="btn-add-credit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.85rem; color: #313030;">
           + Thêm người
         </button>
       </div>
@@ -428,21 +432,21 @@ const films = await getFilms(db);
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: INSERT & CROP IMAGE (Upload to R2 / Paste Link / Preview / Crop) -->
+  <!-- MODAL 1: INSERT & CROP IMAGE                                              -->
   <!-- ========================================================================= -->
   <div id="image-modal" class="modal-overlay">
     <div class="modal-card">
       <!-- Modal Header -->
       <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
         <div>
-          <h3 id="modal-title-heading" style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">
+          <h3 id="modal-title-heading" style="font-size: 1.15rem; font-weight: 700; color: #313030; margin: 0;">
             Chèn & Chỉnh sửa ảnh (Crop tùy thích)
           </h3>
-          <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #64748b; margin: 0.15rem 0 0 0;">
+          <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #545454; margin: 0.15rem 0 0 0;">
             Chọn tỷ lệ có sẵn, tỷ lệ ảnh gốc hoặc tự do kéo thả 4 góc để crop ảnh.
           </p>
         </div>
-        <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">✕</button>
+        <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #545454; cursor: pointer;">✕</button>
       </div>
 
       <!-- Modal Body -->
@@ -451,7 +455,7 @@ const films = await getFilms(db);
         <div id="modal-input-sources" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
           <!-- Option A: Upload to R2 -->
           <div>
-            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #0f172a; margin-bottom: 0.4rem;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
               Cách 1: Tải ảnh từ máy tính (lên R2)
             </label>
             <input type="file" id="modal-file-input" accept="image/*" style="font-size: 0.85rem;" />
@@ -462,18 +466,18 @@ const films = await getFilms(db);
 
           <!-- Option B: Paste link -->
           <div>
-            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #0f172a; margin-bottom: 0.4rem;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
               Cách 2: Dán đường dẫn ảnh (R2 / Web)
             </label>
             <div style="display: flex; gap: 0.5rem;">
               <input type="text" id="modal-link-input" placeholder="https://storage.hiepcm.com/..." style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
-              <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;">Tải ảnh</button>
+              <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #313030;">Tải ảnh</button>
             </div>
           </div>
         </div>
 
-        <!-- Re-crop Notice (shown only when re-cropping existing image) -->
-        <div id="modal-recrop-notice" style="display: none; background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
+        <!-- Re-crop Notice -->
+        <div id="modal-recrop-notice" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; color: #313030; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
           ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
         </div>
 
@@ -483,7 +487,7 @@ const films = await getFilms(db);
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
             <!-- Aspect Ratio Buttons -->
             <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
-              <span style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-right: 0.2rem;">Tỷ lệ (Ratio):</span>
+              <span style="font-size: 0.8rem; font-weight: 700; color: #545454; margin-right: 0.2rem;">Tỷ lệ:</span>
               <button type="button" class="btn-crop-ratio tb-btn active" data-ratio="free" title="Kéo 4 góc tự do không giới hạn">Tự do</button>
               <button type="button" class="btn-crop-ratio tb-btn" data-ratio="original" title="Giữ đúng tỷ lệ ảnh gốc nhưng cho phép co nhỏ lại để cắt bớt viền">Ảnh gốc</button>
               <button type="button" class="btn-crop-ratio tb-btn" data-ratio="16:9" title="Tỷ lệ 16:9 ngang chuẩn video/màn hình">16:9</button>
@@ -502,7 +506,7 @@ const films = await getFilms(db);
           </div>
 
           <!-- Cropper Container -->
-          <div style="width: 100%; height: 380px; background: #0f172a; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div style="width: 100%; height: 380px; background: #313030; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
             <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
               Chưa có ảnh. Vui lòng chọn file tải lên hoặc dán link ảnh từ R2 vào ô phía trên để bắt đầu Preview & Crop.
@@ -513,10 +517,10 @@ const films = await getFilms(db);
 
       <!-- Modal Footer -->
       <div style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; background: #f8fafc;">
-        <button type="button" id="btn-modal-cancel" class="btn btn-outline">
+        <button type="button" id="btn-modal-cancel" class="btn btn-outline" style="color: #545454; border-color: #cbd5e1;">
           Cancel (Hủy)
         </button>
-        <button type="button" id="btn-modal-save" class="btn btn-primary" style="background: #0284c7;" disabled>
+        <button type="button" id="btn-modal-save" class="btn btn-primary" style="background: #313030;" disabled>
           Save & Chèn vào Canvas
         </button>
       </div>
@@ -524,21 +528,21 @@ const films = await getFilms(db);
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 2: FULL WEBSITE PREVIEW (Xem trước toàn bộ website trước khi lưu)    -->
+  <!-- MODAL 2: FULL WEBSITE PREVIEW (Khớp font & cỡ chữ chính xác)             -->
   <!-- ========================================================================= -->
   <div id="preview-modal" class="modal-overlay" style="padding: 0; background: #ffffff;">
     <div style="width: 100%; height: 100vh; display: flex; flex-direction: column;">
       <!-- Floating Top Control Bar -->
-      <div style="height: 54px; background: #0f172a; color: #ffffff; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1px solid #1e293b;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600;">
+      <div style="height: 54px; background: #313030; color: #ffffff; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1px solid #545454;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 500;">
           <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e;"></span>
-          Chế độ xem trước toàn bộ website (Full Live Preview)
+          Chế độ xem trước website thực tế (Fraunces 25px / Inter 16px, 15px, 13px / #313030)
         </div>
         <div style="display: flex; gap: 0.75rem;">
-          <button type="button" id="btn-preview-close" class="btn btn-outline" style="color: #ffffff; border-color: #475569; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+          <button type="button" id="btn-preview-close" class="btn btn-outline" style="color: #ffffff; border-color: #545454; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
             ✕ Đóng Preview
           </button>
-          <button type="button" id="btn-preview-save-direct" class="btn btn-primary" style="background: #0284c7; padding: 0.35rem 1rem; font-size: 0.82rem;">
+          <button type="button" id="btn-preview-save-direct" class="btn btn-primary" style="background: #545454; padding: 0.35rem 1rem; font-size: 0.82rem;">
             💾 Lưu ngay phim này
           </button>
         </div>
@@ -549,15 +553,15 @@ const films = await getFilms(db);
         <!-- Left Sidebar (Mimics Layout.astro) -->
         <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; border-right: none; background: #ffffff;">
           <nav style="display: flex; flex-direction: column;">
-            <div style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin-bottom: 0.65rem;">
+            <div style="font-size: 1rem; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 0.65rem;">
               Films
             </div>
             <ul id="preview-sidebar-films" style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0; margin-bottom: 2.25rem;">
               <!-- Dynamic film items -->
             </ul>
             <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-              <span style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em;">About</span>
-              <span style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em;">CV</span>
+              <span style="font-size: 1rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">About</span>
+              <span style="font-size: 1rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">CV</span>
             </div>
           </nav>
         </aside>
@@ -567,21 +571,24 @@ const films = await getFilms(db);
           <div style="display: flex; align-items: flex-start; gap: clamp(60px, 6vw, 100px); width: 100%;">
             <!-- Content Column -->
             <div style="max-width: 840px; width: 100%; display: flex; flex-direction: column;">
-              <h1 id="preview-film-title" style="font-family: 'Fraunces', Georgia, serif; font-size: 1.85rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
+              <!-- Tên phim: font Fraunces, cỡ chữ 25px, màu #313030 -->
+              <h1 id="preview-film-title" style="font-family: 'Fraunces', Georgia, serif; font-size: 25px; font-weight: 400; color: #313030; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
                 <!-- Film title -->
               </h1>
 
-              <p id="preview-film-format" style="font-size: 0.92rem; color: #000000; margin-bottom: 28px;">
+              <!-- Thông số: font Inter, cỡ chữ 16px, màu #545454 -->
+              <p id="preview-film-format" style="font-family: 'Inter', system-ui, sans-serif; font-size: 16px; color: #545454; margin-bottom: 28px; line-height: 1.5;">
                 <!-- Film format -->
               </p>
 
-              <div id="preview-canvas-render" style="font-size: 0.95rem; line-height: 1.6; color: #000000;">
+              <!-- Text trên canvas: font Inter, cỡ chữ 15px, màu #313030 -->
+              <div id="preview-canvas-render" style="font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.6; color: #313030;">
                 <!-- Canvas HTML content -->
               </div>
             </div>
 
-            <!-- Credits Column -->
-            <aside id="preview-film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Credits Column: font Inter, cỡ chữ 13px -->
+            <aside id="preview-film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', system-ui, sans-serif;">
               <!-- Film credits -->
             </aside>
           </div>
@@ -667,9 +674,7 @@ const films = await getFilms(db);
     let draggedWrapper = null;
     let currentSelectedRatio = 'free';
 
-    // =========================================================================
-    // UNDO / REDO STATE MANAGEMENT
-    // =========================================================================
+    // Undo / Redo
     let historyStack = [];
     let historyIndex = -1;
     const MAX_HISTORY = 60;
@@ -686,7 +691,6 @@ const films = await getFilms(db);
         return;
       }
 
-      // Truncate future redo states if newly edited after undos
       if (historyIndex < historyStack.length - 1) {
         historyStack = historyStack.slice(0, historyIndex + 1);
       }
@@ -732,7 +736,6 @@ const films = await getFilms(db);
     tbUndo.addEventListener('click', undo);
     tbRedo.addEventListener('click', redo);
 
-    // Debounced text typing recorder
     canvasEditor.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
@@ -740,7 +743,6 @@ const films = await getFilms(db);
       }, 400);
     });
 
-    // Keyboard shortcuts (Cmd+Z, Ctrl+Z, Cmd+Shift+Z, Ctrl+Y)
     window.addEventListener('keydown', (e) => {
       if (document.activeElement === canvasEditor || canvasEditor.contains(document.activeElement) || selectedImageElement) {
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
@@ -758,20 +760,17 @@ const films = await getFilms(db);
       }
     });
 
-    // =========================================================================
-    // LOAD FILM INTO CANVAS
-    // =========================================================================
+    // 2. Load Film Data into Canvas Form
     function loadFilm(slug) {
       if (slug === '__NEW_FILM__') {
         currentFilmSlug = '';
         titleInput.value = '';
         formatInput.value = '';
         slugInput.value = '';
-        canvasEditor.innerHTML = '<p>Bắt đầu viết nội dung phim tại đây...</p>';
+        canvasEditor.innerHTML = '<p style="font-size: 15px; color: #313030;">Bắt đầu viết nội dung phim tại đây...</p>';
         renderCredits([{ role: 'Directed by', name: 'Cầm Đức Hiệp' }]);
         viewLiveBtn.style.display = 'none';
         ensureDraggableImages();
-        // Reset history
         historyStack = [canvasEditor.innerHTML];
         historyIndex = 0;
         updateUndoRedoButtons();
@@ -785,7 +784,7 @@ const films = await getFilms(db);
       titleInput.value = film.title || '';
       formatInput.value = film.format || '';
       slugInput.value = film.slug || '';
-      canvasEditor.innerHTML = film.content_html || '<p></p>';
+      canvasEditor.innerHTML = film.content_html || '<p style="font-size: 15px; color: #313030;"></p>';
       
       const credits = film.credits && film.credits.length > 0
         ? film.credits.map(c => ({
@@ -801,13 +800,12 @@ const films = await getFilms(db);
 
       ensureDraggableImages();
 
-      // Reset history for loaded film
       historyStack = [canvasEditor.innerHTML];
       historyIndex = 0;
       updateUndoRedoButtons();
     }
 
-    // 3. Render Credits Rows
+    // 3. Render Credits Rows (Font Inter, Cỡ chữ 13px)
     function renderCredits(credits) {
       creditsList.innerHTML = '';
       if (!credits || credits.length === 0) {
@@ -819,8 +817,8 @@ const films = await getFilms(db);
         row.className = 'credit-row';
         row.style.cssText = 'display: grid; grid-template-columns: 240px 1fr 38px; gap: 0.75rem; align-items: center;';
         row.innerHTML = `
-          <input type="text" placeholder="Role (e.g. Directed by)" value="${cr.role || ''}" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
-          <input type="text" placeholder="Tên thành viên (e.g. Cầm Đức Hiệp)" value="${cr.name || ''}" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+          <input type="text" placeholder="Role (e.g. Directed by)" value="${cr.role || ''}" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #545454;" />
+          <input type="text" placeholder="Tên thành viên (e.g. Cầm Đức Hiệp)" value="${cr.name || ''}" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #313030;" />
           <button type="button" class="btn-del-credit tb-btn btn-danger" style="height: 38px; width: 38px; border-radius: 0.375rem; padding: 0; font-size: 1rem;" title="Xóa người này">✕</button>
         `;
 
@@ -840,8 +838,8 @@ const films = await getFilms(db);
       row.className = 'credit-row';
       row.style.cssText = 'display: grid; grid-template-columns: 240px 1fr 38px; gap: 0.75rem; align-items: center;';
       row.innerHTML = `
-        <input type="text" placeholder="Role (e.g. Producer)" value="" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
-        <input type="text" placeholder="Tên thành viên" value="" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.9rem;" />
+        <input type="text" placeholder="Role (e.g. Producer)" value="" class="credit-role" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #545454;" />
+        <input type="text" placeholder="Tên thành viên" value="" class="credit-name" style="padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #313030;" />
         <button type="button" class="btn-del-credit tb-btn btn-danger" style="height: 38px; width: 38px; border-radius: 0.375rem; padding: 0; font-size: 1rem;" title="Xóa người này">✕</button>
       `;
       row.querySelector('.btn-del-credit').addEventListener('click', () => {
@@ -911,7 +909,7 @@ const films = await getFilms(db);
       recordHistory(true);
     });
 
-    // 5. Image Modal & Crop System (Insert New OR Re-Crop Existing + Ratio Selection)
+    // 5. Image Modal & Crop System
     btnInsertImage.addEventListener('click', () => {
       isReCropping = false;
       activeReCropImg = null;
@@ -1127,6 +1125,7 @@ const films = await getFilms(db);
           imgWrapper.appendChild(img);
 
           const pAfter = document.createElement('p');
+          pAfter.style.cssText = 'font-size: 15px; color: #313030;';
           pAfter.innerHTML = '<br/>';
 
           if (savedSelectionRange) {
@@ -1328,35 +1327,53 @@ const films = await getFilms(db);
       });
     }
 
-    // 8. Full Website Preview Modal
+    // 8. Full Website Preview Modal (Exact typography and colors)
     btnOpenPreview.addEventListener('click', () => {
       previewSidebarFilms.innerHTML = '';
       allFilms.forEach(f => {
         const li = document.createElement('li');
         const isCurrent = f.slug === slugInput.value.trim();
         li.innerHTML = `
-          <span style="font-size: 0.92rem; display: block; ${isCurrent ? 'color: #000; opacity: 0.35;' : 'color: #000; opacity: 1; font-weight: 500;'}">
+          <span style="font-size: 0.92rem; display: block; ${isCurrent ? 'color: #545454; font-weight: 400;' : 'color: #313030; font-weight: 500;'}">
             ${f.title.split('|')[0].trim()}
           </span>
         `;
         previewSidebarFilms.appendChild(li);
       });
 
+      // Tên phim: font Fraunces, cỡ chữ 25px, màu #313030
       previewFilmTitle.innerText = titleInput.value.trim() || 'Chưa đặt tiêu đề';
-      previewFilmFormat.innerText = formatInput.value.trim() || '';
-      previewCanvasRender.innerHTML = canvasEditor.innerHTML;
+      previewFilmTitle.style.fontFamily = "'Fraunces', Georgia, serif";
+      previewFilmTitle.style.fontSize = "25px";
+      previewFilmTitle.style.color = "#313030";
 
+      // Thông số: font Inter, cỡ chữ 16px, màu #545454
+      previewFilmFormat.innerText = formatInput.value.trim() || '';
+      previewFilmFormat.style.fontFamily = "'Inter', system-ui, sans-serif";
+      previewFilmFormat.style.fontSize = "16px";
+      previewFilmFormat.style.color = "#545454";
+
+      // Text trên canvas: font Inter, cỡ chữ 15px, màu #313030
+      previewCanvasRender.innerHTML = canvasEditor.innerHTML;
+      previewCanvasRender.style.fontFamily = "'Inter', system-ui, sans-serif";
+      previewCanvasRender.style.fontSize = "15px";
+      previewCanvasRender.style.color = "#313030";
+
+      // Credit: font Inter, cỡ chữ 13px: role #545454, name #313030
       previewFilmCredits.innerHTML = '';
+      previewFilmCredits.style.fontFamily = "'Inter', system-ui, sans-serif";
+      previewFilmCredits.style.fontSize = "13px";
+
       const creditRows = creditsList.querySelectorAll('.credit-row');
       creditRows.forEach(row => {
         const role = row.querySelector('.credit-role').value.trim();
         const name = row.querySelector('.credit-name').value.trim();
         if (role || name) {
           const div = document.createElement('div');
-          div.style.cssText = 'display: flex; flex-direction: column; gap: 1px;';
+          div.style.cssText = 'display: flex; flex-direction: column; gap: 2px;';
           div.innerHTML = `
-            <div style="font-size: 0.88rem; color: #666666; font-weight: 400;">${role}</div>
-            <div style="font-size: 0.92rem; color: #000000; font-weight: 400;">${name}</div>
+            <div style="font-size: 13px; color: #545454; font-weight: 400; line-height: 1.4;">${role}</div>
+            <div style="font-size: 13px; color: #313030; font-weight: 400; line-height: 1.4;">${name}</div>
           `;
           previewFilmCredits.appendChild(div);
         }

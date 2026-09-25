@@ -22,26 +22,26 @@ if (!film) {
   <div class="film-container" style="display: flex; align-items: flex-start; gap: clamp(60px, 6vw, 100px); width: 100%;">
     <!-- Main Column: Title, Format, Canvas Content -->
     <div class="film-content-col" style="max-width: 840px; width: 100%; display: flex; flex-direction: column;">
-      <!-- Title -->
-      <h1 style="font-family: var(--font-serif); font-size: 1.85rem; font-weight: 400; color: #000000; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
+      <!-- Title: Font Fraunces, Cỡ chữ 25px, Màu #313030 -->
+      <h1 style="font-family: var(--font-serif); font-size: 25px; font-weight: 400; color: #313030; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 8px;">
         {film.title}
       </h1>
 
-      <!-- Format / Metadata -->
+      <!-- Format / Thông số: Font Inter, Cỡ chữ 16px, Màu #545454 -->
       {film.format && (
-        <p style="font-size: 0.92rem; color: #000000; margin-bottom: 28px;">
+        <p style="font-family: var(--font-sans); font-size: 16px; color: #545454; margin-bottom: 28px; line-height: 1.5;">
           {film.format}
         </p>
       )}
 
-      <!-- Canvas Content (Dynamic Rich HTML from CMS) -->
+      <!-- Canvas Content: Font Inter, Cỡ chữ 15px, Màu #313030 -->
       {film.content_html ? (
         <div class="film-canvas-content" set:html={film.content_html} />
       ) : (
         <>
           <!-- Legacy Fallback: Synopsis -->
           {film.synopsis && (
-            <p style="font-size: 0.95rem; color: #000000; line-height: 1.6; margin-bottom: 32px; white-space: pre-line;">
+            <p style="font-family: var(--font-sans); font-size: 15px; color: #313030; line-height: 1.6; margin-bottom: 32px; white-space: pre-line;">
               {film.synopsis}
             </p>
           )}
@@ -63,15 +63,15 @@ if (!film) {
       )}
     </div>
 
-    <!-- Right Column: Production Credits -->
+    <!-- Right Column: Production Credits: Font Inter, Cỡ chữ 13px -->
     {film.credits && film.credits.length > 0 && (
-      <aside class="film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px;">
+      <aside class="film-credits" style="width: 260px; flex-shrink: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 20px; font-family: var(--font-sans);">
         {film.credits.map((credit: any) => (
-          <div style="display: flex; flex-direction: column; gap: 1px;">
-            <div style="font-size: 0.88rem; color: #666666; font-weight: 400;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div style="font-size: 13px; color: #545454; font-weight: 400; line-height: 1.4;">
               {credit.role}
             </div>
-            <div style="font-size: 0.92rem; color: #000000; font-weight: 400;">
+            <div style="font-size: 13px; color: #313030; font-weight: 400; line-height: 1.4;">
               {Array.isArray(credit.names) ? credit.names.join(', ') : (credit.name || credit.names || '')}
             </div>
           </div>
@@ -83,11 +83,15 @@ if (!film) {
 
 <style is:global>
   .film-canvas-content {
-    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    font-size: 15px;
     line-height: 1.6;
-    color: #000000;
+    color: #313030;
   }
   .film-canvas-content p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #313030;
     margin-bottom: 1.5rem;
   }
   .film-canvas-content img {

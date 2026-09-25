@@ -1,4 +1,4 @@
-name = "cam-duc-hiep-test"
+name = "cam-duc-hiep"
 main = "dist/_worker.js/index.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
@@ -8,5 +8,5 @@ bucket = "./dist"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "cam-duc-hiep-db-test"
-database_id = "32b66373-645f-43a9-88d2-c554adb4bf09"
+database_name = "cam-duc-hiep-db"
+database_id = "98bc8533-1be2-4c52-bf45-49bbd59c949a"

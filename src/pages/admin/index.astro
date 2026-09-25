@@ -236,30 +236,6 @@ const films = await getFilms(db);
 
         <div>
           <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-            Tiêu đề cho Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 1 dưới poster ngoài trang chủ. Ví dụ: A tale of King Kong. Nếu để trống sẽ lấy từ Tiêu đề phim)</span>
-          </label>
-          <input 
-            type="text" 
-            id="film-list-title-input" 
-            placeholder="A tale of King Kong"
-            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; font-weight: 500; color: #313030;"
-          />
-        </div>
-
-        <div>
-          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-            Mô tả ngắn dưới Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 2 dưới poster ngoài trang chủ. Ví dụ: documentary | 2027 | in developing. Nếu để trống sẽ lấy từ Thông tin phim)</span>
-          </label>
-          <input 
-            type="text" 
-            id="film-list-subtitle-input" 
-            placeholder="documentary | 2027 | in developing"
-            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; color: #545454;"
-          />
-        </div>
-
-        <div>
-          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
             Thông tin phim (Trang chi tiết): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 16px - Ví dụ: Essay film | 15' | 2027 | Vietnam)</span>
           </label>
           <input 
@@ -318,6 +294,30 @@ const films = await getFilms(db);
               <strong>Xem trước Thumbnail:</strong> Ảnh poster này sẽ xuất hiện tại danh sách phim trên trang chủ.
             </div>
           </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Tiêu đề cho Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 1 dưới poster ngoài trang chủ. Ví dụ: A tale of King Kong. Nếu để trống sẽ lấy từ Tiêu đề phim)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-list-title-input" 
+            placeholder="A tale of King Kong"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; font-weight: 500; color: #313030;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Mô tả ngắn dưới Thumbnail (danh sách trang chủ): <span style="color: #545454; font-weight: 400;">(Font Inter - Cỡ chữ 15.5px - Hiển thị dòng 2 dưới poster ngoài trang chủ. Ví dụ: documentary | 2027 | in developing. Nếu để trống sẽ lấy từ Thông tin phim)</span>
+          </label>
+          <input 
+            type="text" 
+            id="film-list-subtitle-input" 
+            placeholder="documentary | 2027 | in developing"
+            style="width: 100%; padding: 0.65rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: 'Inter', system-ui, sans-serif; font-size: 15.5px; color: #545454;"
+          />
         </div>
       </div>
     </div>

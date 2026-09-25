@@ -1,73 +1,106 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { films } from '../data/films';
+import { getFilms } from '../lib/films';
+import { films as defaultFilms } from '../data/films';
 
 export const prerender = false;
 
-// Group films matching the 2-row layout from Page 1 of the reference
-const topRowFilms = films.slice(0, 2);    // A tale of King Kong, Utopia
-const bottomRowFilms = films.slice(2, 5); // Lover for rent, Thành phố muối, Thư - thư
+const db = Astro.locals.runtime?.env?.DB;
+const dbFilms = await getFilms(db);
+const films = dbFilms && dbFilms.length > 0 ? dbFilms : defaultFilms;
+
+// Group films matching layout: Top Row (2 films), Bottom Rows (3 films per row)
+const topRowFilms = films.slice(0, 2);
+const bottomRowFilms = films.slice(2);
 ---
 
 <Layout title="Films">
   <div style="display: flex; flex-direction: column; gap: 50px; width: 100%; background: #ffffff;">
     <!-- Top Row: 2 large cards -->
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
-      {topRowFilms.map((film) => (
-        <a 
-          href={`/films/${film.slug}`} 
-          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
-          class="film-card"
-        >
-          <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #ffffff; margin-bottom: 14px;">
-            <img 
-              src={film.thumbnail} 
-              alt={film.title} 
-              loading="eager"
-              style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
-              class="film-thumb"
-            />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px;">
-            <h2 style="font-size: 1.05rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
-              {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
-            </h2>
-            <p style="font-size: 0.88rem; color: #545454; font-weight: 400;">
-              {film.category} | {film.year}
-            </p>
-          </div>
-        </a>
-      ))}.
+      {topRowFilms.map((film) => {
+        const subInfo = (film.category && film.year) 
+          ? `${film.category} | ${film.year}` 
+          : (film.format ? film.format.split('|').slice(0, 2).join(' | ').trim() : '');
+        return (
+          <a 
+            href={`/films/${film.slug}`} 
+            style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
+            class="film-card"
+          >
+            <div style="width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #f8fafc; margin-bottom: 14px; border-radius: 2px;">
+              {film.thumbnail ? (
+                <img 
+                  src={film.thumbnail} 
+                  alt={film.title} 
+                  loading="eager"
+                  style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
+                  class="film-thumb"
+                />
+              ) : (
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.9rem;">
+                  No Thumbnail
+                </div>
+              )}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h2 style="font-size: 1.05rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
+                {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
+              </h2>
+              {subInfo && (
+                <p style="font-size: 0.88rem; color: #545454; font-weight: 400;">
+                  {subInfo}
+                </p>
+              )}
+            </div>
+          </a>
+        );
+      })}
     </div>
 
-    <!-- Bottom Row: 3 cards -->
-    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
-      {bottomRowFilms.map((film) => (
-        <a 
-          href={`/films/${film.slug}`} 
-          style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
-          class="film-card"
-        >
-          <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #ffffff; margin-bottom: 14px;">
-            <img 
-              src={film.thumbnail} 
-              alt={film.title} 
-              loading="lazy"
-              style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
-              class="film-thumb"
-            />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px;">
-            <h2 style="font-size: 1.02rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
-              {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
-            </h2>
-            <p style="font-size: 0.86rem; color: #545454; font-weight: 400;">
-              {film.category} | {film.year}
-            </p>
-          </div>
-        </a>
-      ))}
-    </div>
+    <!-- Bottom Rows: 3 cards per row -->
+    {bottomRowFilms.length > 0 && (
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
+        {bottomRowFilms.map((film) => {
+          const subInfo = (film.category && film.year) 
+            ? `${film.category} | ${film.year}` 
+            : (film.format ? film.format.split('|').slice(0, 2).join(' | ').trim() : '');
+          return (
+            <a 
+              href={`/films/${film.slug}`} 
+              style="display: flex; flex-direction: column; text-decoration: none; transition: opacity 0.25s; background: #ffffff;"
+              class="film-card"
+            >
+              <div style="width: 100%; aspect-ratio: 16/9.5; overflow: hidden; background: #f8fafc; margin-bottom: 14px; border-radius: 2px;">
+                {film.thumbnail ? (
+                  <img 
+                    src={film.thumbnail} 
+                    alt={film.title} 
+                    loading="lazy"
+                    style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease, opacity 0.3s ease;"
+                    class="film-thumb"
+                  />
+                ) : (
+                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.9rem;">
+                    No Thumbnail
+                  </div>
+                )}
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <h2 style="font-size: 1.02rem; font-weight: 500; color: #313030; letter-spacing: -0.01em;">
+                  {film.title.charAt(0).toUpperCase() + film.title.slice(1)}
+                </h2>
+                {subInfo && (
+                  <p style="font-size: 0.86rem; color: #545454; font-weight: 400;">
+                    {subInfo}
+                  </p>
+                )}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
   </div>
 
   <style>

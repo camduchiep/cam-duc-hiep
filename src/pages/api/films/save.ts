@@ -20,22 +20,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (db) {
       try {
         await db.prepare(`
-          CREATE TABLE IF NOT EXISTS films (
-            slug TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            format TEXT,
-            content_html TEXT,
-            credits_json TEXT,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
+          CREATE TABLE IF NOT EXISTS films (\n            slug TEXT PRIMARY KEY,\n            title TEXT NOT NULL,\n            format TEXT,\n            thumbnail TEXT,\n            content_html TEXT,\n            credits_json TEXT,\n            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP\n          );
         `).run();
 
+        // Safely add column if it was created without thumbnail previously
+        try {
+          await db.prepare('ALTER TABLE films ADD COLUMN thumbnail TEXT').run();
+        } catch {}
+
         await db.prepare(`
-          INSERT INTO films (slug, title, format, content_html, credits_json, updated_at)
-          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          INSERT INTO films (slug, title, format, thumbnail, content_html, credits_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(slug) DO UPDATE SET
             title = excluded.title,
             format = excluded.format,
+            thumbnail = excluded.thumbnail,
             content_html = excluded.content_html,
             credits_json = excluded.credits_json,
             updated_at = CURRENT_TIMESTAMP
@@ -43,6 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           body.slug,
           body.title,
           body.format || '',
+          body.thumbnail || '',
           body.content_html || '',
           JSON.stringify(body.credits || [])
         ).run();
@@ -66,7 +66,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         const index = existingFilms.findIndex(f => f.slug === body.slug);
         if (index >= 0) {
-          existingFilms[index] = body;
+          existingFilms[index] = {
+            ...existingFilms[index],
+            ...body
+          };
         } else {
           existingFilms.push(body);
         }

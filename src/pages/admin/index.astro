@@ -258,6 +258,41 @@ const films = await getFilms(db);
             />
           </div>
         </div>
+
+        <div>
+          <label style="display: block; font-size: 0.88rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+            Ảnh Thumbnail / Poster phim: <span style="color: #545454; font-weight: 400;">(Hiển thị tại danh sách phim trang chủ - Tỉ lệ 16:9 hoặc 16:10)</span>
+          </label>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input 
+              type="text" 
+              id="film-thumbnail-input" 
+              placeholder="/images/films/... hoặc dán link Cloudflare R2"
+              style="flex: 1; min-width: 280px; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; font-family: monospace; color: #313030;"
+            />
+            <label class="btn btn-secondary" style="cursor: pointer; margin: 0; padding: 0.6rem 0.9rem; font-size: 0.85rem; color: #313030; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Tải ảnh lên R2
+              <input type="file" id="film-thumbnail-upload" accept="image/*" style="display: none;" />
+            </label>
+            <button type="button" id="btn-crop-thumbnail" class="btn btn-outline" style="border-color: #cbd5e1; color: #313030; padding: 0.6rem 0.9rem; font-size: 0.85rem;" title="Mở bộ công cụ Crop để cắt ảnh thumbnail theo tỉ lệ chuẩn">
+              ✂️ Crop tỉ lệ chuẩn
+            </button>
+          </div>
+          <div id="thumbnail-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.35rem; font-weight: 600;">
+            ⏳ Đang tải ảnh thumbnail lên Cloudflare R2...
+          </div>
+          <!-- Thumbnail Live Preview Box -->
+          <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 140px; aspect-ratio: 16/10; border-radius: 4px; overflow: hidden; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;">
+              <img id="film-thumbnail-preview" src="" alt="Thumbnail preview" style="width: 100%; height: 100%; object-fit: cover; display: none;" />
+              <span id="thumbnail-preview-empty" style="font-size: 0.72rem; color: #94a3b8; text-align: center; padding: 0.25rem;">Chưa có ảnh</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #545454; line-height: 1.4;">
+              <strong>Xem trước Thumbnail:</strong> Ảnh poster này sẽ xuất hiện tại danh sách phim trên trang chủ.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -615,6 +650,13 @@ const films = await getFilms(db);
     const titleInput = document.getElementById('film-title-input');
     const formatInput = document.getElementById('film-format-input');
     const slugInput = document.getElementById('film-slug-input');
+    const thumbnailInput = document.getElementById('film-thumbnail-input');
+    const thumbnailUpload = document.getElementById('film-thumbnail-upload');
+    const thumbnailUploadLoading = document.getElementById('thumbnail-upload-loading');
+    const thumbnailPreview = document.getElementById('film-thumbnail-preview');
+    const thumbnailPreviewEmpty = document.getElementById('thumbnail-preview-empty');
+    const btnCropThumbnail = document.getElementById('btn-crop-thumbnail');
+    let isThumbnailCrop = false;
     const canvasEditor = document.getElementById('canvas-editor');
     const creditsList = document.getElementById('credits-list');
     const addCreditBtn = document.getElementById('btn-add-credit');
@@ -761,6 +803,68 @@ const films = await getFilms(db);
       }
     });
 
+    // Thumbnail Preview & Upload Handlers
+    function updateThumbnailPreview(url) {
+      if (url && url.trim()) {
+        thumbnailPreview.src = url.trim();
+        thumbnailPreview.style.display = 'block';
+        thumbnailPreviewEmpty.style.display = 'none';
+      } else {
+        thumbnailPreview.src = '';
+        thumbnailPreview.style.display = 'none';
+        thumbnailPreviewEmpty.style.display = 'block';
+      }
+    }
+
+    thumbnailInput.addEventListener('input', () => {
+      updateThumbnailPreview(thumbnailInput.value);
+    });
+
+    thumbnailUpload.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      thumbnailUploadLoading.style.display = 'block';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success && data.url) {
+          thumbnailInput.value = data.url;
+          updateThumbnailPreview(data.url);
+        } else {
+          alert('Tải ảnh thất bại: ' + (data.error || 'Lỗi server'));
+        }
+      } catch (err) {
+        alert('Lỗi kết nối khi tải ảnh lên R2.');
+      } finally {
+        thumbnailUploadLoading.style.display = 'none';
+      }
+    });
+
+    btnCropThumbnail.addEventListener('click', () => {
+      const currentUrl = thumbnailInput.value.trim();
+      if (!currentUrl) {
+        thumbnailUpload.click();
+        return;
+      }
+      isThumbnailCrop = true;
+      isReCropping = false;
+      openImageModal(false);
+      modalHeading.innerText = '✂️ Crop ảnh Thumbnail phim';
+      modalSubHeading.innerText = 'Cắt ảnh theo tỉ lệ 16:9 hoặc 16:10 chuẩn poster trang chủ.';
+      modalSaveBtn.innerText = 'Lưu làm Thumbnail';
+      setupCropper(currentUrl);
+      setTimeout(() => {
+        applyCropperRatio('16:9');
+        document.querySelectorAll('.btn-crop-ratio').forEach(b => {
+          if (b.getAttribute('data-ratio') === '16:9') b.classList.add('active');
+          else b.classList.remove('active');
+        });
+      }, 100);
+    });
+
     // 2. Load Film Data into Canvas Form
     function loadFilm(slug) {
       if (slug === '__NEW_FILM__') {
@@ -771,6 +875,8 @@ const films = await getFilms(db);
         formatInput.placeholder = 'ví dụ: Essay film | 15\' | 2027 | Vietnam';
         slugInput.value = '';
         slugInput.placeholder = 'vi-du-ten-phim';
+        thumbnailInput.value = '';
+        updateThumbnailPreview('');
         canvasEditor.innerHTML = '<p style="font-size: 15px; line-height: 1.4; color: #313030; margin-bottom: 24px;">Nhập tóm tắt hoặc nội dung giới thiệu tác phẩm tại đây...</p><p style="font-size: 15px; line-height: 1.4; color: #313030; margin-bottom: 24px;"><br></p>';
         renderCredits([
           { role: 'Directed by', name: 'Cầm Đức Hiệp' },
@@ -795,6 +901,8 @@ const films = await getFilms(db);
       titleInput.value = film.title || '';
       formatInput.value = film.format || '';
       slugInput.value = film.slug || '';
+      thumbnailInput.value = film.thumbnail || '';
+      updateThumbnailPreview(film.thumbnail || '');
       canvasEditor.innerHTML = film.content_html || '<p style="font-size: 15px; color: #313030;"></p>';
       
       const credits = film.credits && film.credits.length > 0
@@ -972,6 +1080,7 @@ const films = await getFilms(db);
         cropper = null;
       }
       isReCropping = false;
+      isThumbnailCrop = false;
       activeReCropImg = null;
     }
 
@@ -1113,7 +1222,11 @@ const films = await getFilms(db);
           finalImageUrl = croppedCanvas.toDataURL('image/png');
         }
 
-        if (isReCropping && activeReCropImg) {
+        if (isThumbnailCrop) {
+          thumbnailInput.value = finalImageUrl;
+          updateThumbnailPreview(finalImageUrl);
+          isThumbnailCrop = false;
+        } else if (isReCropping && activeReCropImg) {
           activeReCropImg.src = finalImageUrl;
           positionFloatingToolbar(activeReCropImg);
           recordHistory(true);
@@ -1408,6 +1521,7 @@ const films = await getFilms(db);
       const slug = slugInput.value.trim();
       const title = titleInput.value.trim();
       const format = formatInput.value.trim();
+      const thumbnail = thumbnailInput.value.trim();
 
       if (selectedImageElement) {
         selectedImageElement.classList.remove('selected-img');
@@ -1439,6 +1553,7 @@ const films = await getFilms(db);
         slug,
         title,
         format,
+        thumbnail,
         content_html: contentHtml,
         credits
       };

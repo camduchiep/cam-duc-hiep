@@ -59,10 +59,17 @@ const films = await getFilms(db);
       min-width: 32px;
       transition: all 0.15s ease;
     }
-    .tb-btn:hover {
+    .tb-btn:hover:not(:disabled) {
       background: #f1f5f9;
       border-color: #94a3b8;
       color: #0f172a;
+    }
+    .tb-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+      color: #94a3b8 !important;
     }
     .tb-btn.active {
       background: #0f172a !important;
@@ -258,7 +265,7 @@ const films = await getFilms(db);
             2. Canvas nội dung
           </h3>
           <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Ảnh có thể <strong>kéo thả đổi vị trí</strong> giữa các đoạn văn/ảnh, và bấm nút để <strong>Crop lại ảnh</strong> theo tỷ lệ tự do hoặc tỷ lệ cố định.
+            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Hỗ trợ <strong>Undo (Ctrl+Z) / Redo (Ctrl+Y)</strong> nếu thao tác nhầm lẫn. Ảnh có thể kéo thả đổi vị trí hoặc crop lại.
           </p>
         </div>
       </div>
@@ -267,6 +274,16 @@ const films = await getFilms(db);
       <div style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
         <!-- Toolbar -->
         <div class="editor-toolbar">
+          <!-- Undo / Redo Group -->
+          <div class="tb-group">
+            <button type="button" id="tb-undo" class="tb-btn" title="Hoàn tác (Undo - Ctrl+Z / Cmd+Z)" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </button>
+            <button type="button" id="tb-redo" class="tb-btn" title="Làm lại (Redo - Ctrl+Y / Cmd+Shift+Z)" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+            </button>
+          </div>
+
           <!-- Font Size -->
           <div class="tb-group">
             <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Cỡ chữ:</label>
@@ -286,30 +303,30 @@ const films = await getFilms(db);
           <div class="tb-group">
             <label style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-right: 0.25rem;">Màu:</label>
             <input type="color" id="tb-color" value="#000000" style="width: 28px; height: 28px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Chọn màu chữ" />
-            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem;" onclick="document.execCommand('foreColor', false, '#000000');" title="Màu đen chuẩn">Đen</button>
-            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #64748b;" onclick="document.execCommand('foreColor', false, '#666666');" title="Màu xám">Xám</button>
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem;" onclick="document.execCommand('foreColor', false, '#000000'); setTimeout(() => recordHistory(true), 50);" title="Màu đen chuẩn">Đen</button>
+            <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #64748b;" onclick="document.execCommand('foreColor', false, '#666666'); setTimeout(() => recordHistory(true), 50);" title="Màu xám">Xám</button>
           </div>
 
           <!-- Text Style Format -->
           <div class="tb-group">
-            <button type="button" class="tb-btn" onclick="document.execCommand('bold', false, '');" title="In đậm (Bold)"><b>B</b></button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('italic', false, '');" title="In nghiêng (Italic)"><i>I</i></button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('underline', false, '');" title="Gạch chân (Underline)"><u>U</u></button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('strikeThrough', false, '');" title="Gạch ngang (Strikethrough)"><s>S</s></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('bold', false, ''); setTimeout(() => recordHistory(true), 50);" title="In đậm (Bold)"><b>B</b></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('italic', false, ''); setTimeout(() => recordHistory(true), 50);" title="In nghiêng (Italic)"><i>I</i></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('underline', false, ''); setTimeout(() => recordHistory(true), 50);" title="Gạch chân (Underline)"><u>U</u></button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('strikeThrough', false, ''); setTimeout(() => recordHistory(true), 50);" title="Gạch ngang (Strikethrough)"><s>S</s></button>
           </div>
 
           <!-- Alignment -->
           <div class="tb-group">
-            <button type="button" class="tb-btn" onclick="document.execCommand('justifyLeft', false, '');" title="Căn trái">
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyLeft', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn trái">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
             </button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('justifyCenter', false, '');" title="Căn giữa">
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyCenter', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn giữa">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
             </button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('justifyRight', false, '');" title="Căn phải">
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyRight', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn phải">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
             </button>
-            <button type="button" class="tb-btn" onclick="document.execCommand('justifyFull', false, '');" title="Căn đều 2 bên (Justify)">
+            <button type="button" class="tb-btn" onclick="document.execCommand('justifyFull', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn đều 2 bên (Justify)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
             </button>
           </div>
@@ -363,14 +380,14 @@ const films = await getFilms(db);
         
         <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
         
-        <!-- Re-crop button (Crop lại ảnh đã có) -->
+        <!-- Re-crop button -->
         <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
           ✂️ Crop lại ảnh
         </button>
 
         <span style="height: 16px; width: 1px; background: #334155; margin: 0 0.2rem;"></span>
 
-        <!-- Position reordering buttons (Đổi vị trí lên / xuống) -->
+        <!-- Position reordering buttons -->
         <span style="font-weight: 600; color: #94a3b8; padding-right: 0.25rem;">Vị trí:</span>
         <button type="button" id="btn-img-move-up" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển lên trên đoạn văn/ảnh liền trước">
           ⬆ Lên
@@ -598,6 +615,8 @@ const films = await getFilms(db);
     const saveStatusBanner = document.getElementById('save-status-banner');
 
     // Toolbar Elements
+    const tbUndo = document.getElementById('tb-undo');
+    const tbRedo = document.getElementById('tb-redo');
     const tbFontSize = document.getElementById('tb-fontsize');
     const tbColor = document.getElementById('tb-color');
     const tbLineHeight = document.getElementById('tb-lineheight');
@@ -648,7 +667,100 @@ const films = await getFilms(db);
     let draggedWrapper = null;
     let currentSelectedRatio = 'free';
 
-    // 2. Load Film Data into Canvas Form
+    // =========================================================================
+    // UNDO / REDO STATE MANAGEMENT
+    // =========================================================================
+    let historyStack = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 60;
+    let debounceTimer = null;
+
+    function updateUndoRedoButtons() {
+      tbUndo.disabled = historyIndex <= 0;
+      tbRedo.disabled = historyIndex >= historyStack.length - 1;
+    }
+
+    function recordHistory(force = false) {
+      const currentHTML = canvasEditor.innerHTML;
+      if (!force && historyStack.length > 0 && historyStack[historyIndex] === currentHTML) {
+        return;
+      }
+
+      // Truncate future redo states if newly edited after undos
+      if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+      }
+
+      historyStack.push(currentHTML);
+      if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+      } else {
+        historyIndex++;
+      }
+
+      updateUndoRedoButtons();
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        canvasEditor.innerHTML = historyStack[historyIndex];
+        ensureDraggableImages();
+        if (selectedImageElement) {
+          selectedImageElement.classList.remove('selected-img');
+          selectedImageElement = null;
+        }
+        imgFloatingToolbar.style.display = 'none';
+        updateUndoRedoButtons();
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        canvasEditor.innerHTML = historyStack[historyIndex];
+        ensureDraggableImages();
+        if (selectedImageElement) {
+          selectedImageElement.classList.remove('selected-img');
+          selectedImageElement = null;
+        }
+        imgFloatingToolbar.style.display = 'none';
+        updateUndoRedoButtons();
+      }
+    }
+
+    tbUndo.addEventListener('click', undo);
+    tbRedo.addEventListener('click', redo);
+
+    // Debounced text typing recorder
+    canvasEditor.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        recordHistory();
+      }, 400);
+    });
+
+    // Keyboard shortcuts (Cmd+Z, Ctrl+Z, Cmd+Shift+Z, Ctrl+Y)
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === canvasEditor || canvasEditor.contains(document.activeElement) || selectedImageElement) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+          if (e.shiftKey) {
+            e.preventDefault();
+            redo();
+          } else {
+            e.preventDefault();
+            undo();
+          }
+        } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+          e.preventDefault();
+          redo();
+        }
+      }
+    });
+
+    // =========================================================================
+    // LOAD FILM INTO CANVAS
+    // =========================================================================
     function loadFilm(slug) {
       if (slug === '__NEW_FILM__') {
         currentFilmSlug = '';
@@ -659,6 +771,10 @@ const films = await getFilms(db);
         renderCredits([{ role: 'Directed by', name: 'Cầm Đức Hiệp' }]);
         viewLiveBtn.style.display = 'none';
         ensureDraggableImages();
+        // Reset history
+        historyStack = [canvasEditor.innerHTML];
+        historyIndex = 0;
+        updateUndoRedoButtons();
         return;
       }
 
@@ -684,6 +800,11 @@ const films = await getFilms(db);
       viewLiveBtn.style.display = 'inline-flex';
 
       ensureDraggableImages();
+
+      // Reset history for loaded film
+      historyStack = [canvasEditor.innerHTML];
+      historyIndex = 0;
+      updateUndoRedoButtons();
     }
 
     // 3. Render Credits Rows
@@ -714,7 +835,6 @@ const films = await getFilms(db);
       });
     }
 
-    // Add Credit Row
     addCreditBtn.addEventListener('click', () => {
       const row = document.createElement('div');
       row.className = 'credit-row';
@@ -757,10 +877,12 @@ const films = await getFilms(db);
       span.style.fontSize = size;
       span.appendChild(range.extractContents());
       range.insertNode(span);
+      recordHistory(true);
     });
 
     tbColor.addEventListener('input', (e) => {
       document.execCommand('foreColor', false, e.target.value);
+      recordHistory(true);
     });
 
     tbLineHeight.addEventListener('change', (e) => {
@@ -777,6 +899,7 @@ const films = await getFilms(db);
           parent = parent.parentElement;
         }
       }
+      recordHistory(true);
     });
 
     tbParaMargin.addEventListener('change', (e) => {
@@ -785,6 +908,7 @@ const films = await getFilms(db);
       pElements.forEach(p => {
         p.style.marginBottom = margin;
       });
+      recordHistory(true);
     });
 
     // 5. Image Modal & Crop System (Insert New OR Re-Crop Existing + Ratio Selection)
@@ -804,7 +928,6 @@ const films = await getFilms(db);
       cropperTargetImg.style.display = 'none';
       cropperPlaceholder.style.display = 'block';
 
-      // Reset ratio buttons to 'free' active
       currentSelectedRatio = 'free';
       document.querySelectorAll('.btn-crop-ratio').forEach(b => {
         if (b.getAttribute('data-ratio') === 'free') b.classList.add('active');
@@ -851,9 +974,8 @@ const films = await getFilms(db);
       currentSelectedRatio = ratioKey;
 
       if (ratioKey === 'free') {
-        cropper.setAspectRatio(NaN); // Tự do không giới hạn
+        cropper.setAspectRatio(NaN);
       } else if (ratioKey === 'original') {
-        // Khóa đúng theo tỷ lệ ảnh gốc nhưng cho phép co nhỏ lại tùy thích
         const imgData = cropper.getImageData();
         if (imgData && imgData.naturalWidth && imgData.naturalHeight) {
           cropper.setAspectRatio(imgData.naturalWidth / imgData.naturalHeight);
@@ -873,7 +995,6 @@ const films = await getFilms(db);
       }
     }
 
-    // Ratio Preset Buttons Events
     document.querySelectorAll('.btn-crop-ratio').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.btn-crop-ratio').forEach(b => b.classList.remove('active'));
@@ -893,14 +1014,13 @@ const films = await getFilms(db);
       cropperTargetImg.style.display = 'block';
 
       cropper = new Cropper(cropperTargetImg, {
-        aspectRatio: NaN, // Default to free crop
+        aspectRatio: NaN,
         viewMode: 1,
         autoCropArea: 0.95,
         responsive: true,
         background: false,
         ready() {
           modalSaveBtn.disabled = false;
-          // Re-apply ratio if user previously clicked another ratio
           if (currentSelectedRatio !== 'free') {
             applyCropperRatio(currentSelectedRatio);
           }
@@ -908,7 +1028,6 @@ const films = await getFilms(db);
       });
     }
 
-    // Modal File Upload to R2
     modalFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -936,7 +1055,6 @@ const films = await getFilms(db);
       }
     });
 
-    // Modal Link Input
     btnLoadLink.addEventListener('click', () => {
       const url = modalLinkInput.value.trim();
       if (!url) {
@@ -954,7 +1072,7 @@ const films = await getFilms(db);
       if (cropper) cropper.reset();
     });
 
-    // Save Cropped Image (handles both Insert New and Re-Crop)
+    // Save Cropped Image (Insert New OR Re-Crop)
     modalSaveBtn.addEventListener('click', async () => {
       if (!cropper) return;
 
@@ -989,6 +1107,7 @@ const films = await getFilms(db);
         if (isReCropping && activeReCropImg) {
           activeReCropImg.src = finalImageUrl;
           positionFloatingToolbar(activeReCropImg);
+          recordHistory(true);
         } else {
           canvasEditor.focus();
           if (savedSelectionRange) {
@@ -1019,6 +1138,7 @@ const films = await getFilms(db);
           }
 
           attachDragEventsToWrapper(imgWrapper);
+          recordHistory(true);
         }
 
         closeImageModal();
@@ -1061,6 +1181,7 @@ const films = await getFilms(db);
           selectedImageElement.style.width = size;
           selectedImageElement.style.maxWidth = '100%';
           positionFloatingToolbar(selectedImageElement);
+          recordHistory(true);
         }
       });
     });
@@ -1074,7 +1195,7 @@ const films = await getFilms(db);
       setupCropper(selectedImageElement.src);
     });
 
-    // C: MOVE IMAGE UP (Di chuyển lên trên)
+    // C: MOVE IMAGE UP
     btnImgMoveUp.addEventListener('click', () => {
       if (!selectedImageElement) return;
       const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
@@ -1084,10 +1205,11 @@ const films = await getFilms(db);
       if (prev) {
         wrapper.parentElement.insertBefore(wrapper, prev);
         positionFloatingToolbar(selectedImageElement);
+        recordHistory(true);
       }
     });
 
-    // D: MOVE IMAGE DOWN (Di chuyển xuống dưới)
+    // D: MOVE IMAGE DOWN
     btnImgMoveDown.addEventListener('click', () => {
       if (!selectedImageElement) return;
       const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
@@ -1097,6 +1219,7 @@ const films = await getFilms(db);
       if (next) {
         wrapper.parentElement.insertBefore(wrapper, next.nextElementSibling);
         positionFloatingToolbar(selectedImageElement);
+        recordHistory(true);
       }
     });
 
@@ -1110,6 +1233,7 @@ const films = await getFilms(db);
         }
         selectedImageElement = null;
         imgFloatingToolbar.style.display = 'none';
+        recordHistory(true);
       }
     });
 
@@ -1176,6 +1300,7 @@ const films = await getFilms(db);
         } else {
           canvasEditor.insertBefore(draggedWrapper, target.nextElementSibling);
         }
+        recordHistory(true);
       }
 
       document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {

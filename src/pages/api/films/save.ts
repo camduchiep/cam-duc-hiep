@@ -20,7 +20,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (db) {
       try {
         await db.prepare(`
-          CREATE TABLE IF NOT EXISTS films (\n            slug TEXT PRIMARY KEY,\n            title TEXT NOT NULL,\n            format TEXT,\n            thumbnail TEXT,\n            content_html TEXT,\n            credits_json TEXT,\n            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP\n          );
+          CREATE TABLE IF NOT EXISTS films (
+            slug TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            format TEXT,
+            thumbnail TEXT,
+            content_html TEXT,
+            credits_json TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
         `).run();
 
         // Safely add column if it was created without thumbnail previously

@@ -8,16 +8,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const file = formData.get('file') as File;
 
     if (!file) {
-      return new Response(JSON.stringify({ error: 'Không tìm thấy file ảnh tải lên.' }), {
+      return new Response(JSON.stringify({ error: 'Không tìm thấy file tải lên.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Clean filename
-    const ext = file.name.split('.').pop() || 'png';
+    // Clean filename & determine MIME
+    const ext = (file.name.split('.').pop() || '').toLowerCase() || (file.type?.includes('video') ? 'mp4' : 'png');
     const cleanBaseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${Date.now()}_${cleanBaseName}.${ext}`;
+
+    const mimeType = file.type || (
+      ext === 'mp4' ? 'video/mp4' :
+      ext === 'webm' ? 'video/webm' :
+      ext === 'mov' ? 'video/quicktime' :
+      ext === 'gif' ? 'image/gif' :
+      ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' :
+      ext === 'webp' ? 'image/webp' :
+      ext === 'svg' ? 'image/svg+xml' : 'image/png'
+    );
 
     const bucket = locals.runtime?.env?.BUCKET;
 
@@ -26,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const arrayBuffer = await file.arrayBuffer();
       await bucket.put(filename, arrayBuffer, {
         httpMetadata: {
-          contentType: file.type || 'image/png'
+          contentType: mimeType
         }
       });
       const publicUrl = `https://storage.hiepcm.com/${filename}`;
@@ -58,13 +68,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // 3. Fallback: Base64 Data URL
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
-    const dataUrl = `data:${file.type || 'image/png'};base64,${base64}`;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
     return new Response(JSON.stringify({ success: true, url: dataUrl }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || 'Lỗi xử lý tải ảnh lên R2' }), {
+    return new Response(JSON.stringify({ error: err.message || 'Lỗi xử lý tải file lên R2' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -81,6 +81,19 @@ if (!film) {
   </div>
 </Layout>
 
+<script is:inline>
+  // Ensure simulated gif / loop videos autoplay reliably
+  document.addEventListener('DOMContentLoaded', () => {
+    const loopVideos = document.querySelectorAll('.film-canvas-content video');
+    loopVideos.forEach(v => {
+      if (v.hasAttribute('loop') || v.getAttribute('data-loop') === 'true') {
+        v.muted = true;
+        v.play().catch(() => {});
+      }
+    });
+  });
+</script>
+
 <style is:global>
   .film-canvas-content {
     font-family: var(--font-sans);
@@ -97,7 +110,22 @@ if (!film) {
   .film-canvas-content img {
     max-width: 100%;
     height: auto;
-    display: block;
+    display: inline-block;
     margin: 8px 0;
+  }
+  .film-canvas-content video {
+    max-width: 100%;
+    height: auto;
+    display: inline-block;
+    margin: 8px 0;
+    border-radius: 2px;
+  }
+  .film-canvas-content video[data-loop="true"],
+  .film-canvas-content video[loop]:not([controls]) {
+    pointer-events: none;
+  }
+  .film-canvas-content .canvas-img-wrapper {
+    margin: 16px 0;
+    text-align: center;
   }
 </style>

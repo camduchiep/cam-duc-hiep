@@ -134,7 +134,8 @@ const films = await getFilms(db);
     .canvas-img-wrapper.drop-target-after {
       border-bottom: 3px solid #0284c7 !important;
     }
-    #canvas-editor img {
+    #canvas-editor img,
+    #canvas-editor video {
       max-width: 100%;
       height: auto;
       display: inline-block;
@@ -143,7 +144,8 @@ const films = await getFilms(db);
       cursor: pointer;
       transition: outline 0.15s ease, box-shadow 0.15s ease;
     }
-    #canvas-editor img.selected-img {
+    #canvas-editor img.selected-img,
+    #canvas-editor video.selected-img {
       outline: 3px solid #0284c7;
       box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
     }
@@ -395,11 +397,11 @@ const films = await getFilms(db);
             </select>
           </div>
 
-          <!-- Insert Image Action Button -->
+          <!-- Insert Media Action Button -->
           <div>
             <button type="button" id="btn-insert-image" class="tb-btn" style="background: #313030; color: #ffffff; border-color: #313030; padding: 0.35rem 0.85rem; gap: 0.4rem;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Insert ảnh mới (Upload R2 / Crop)
+              Insert Media (Ảnh / GIF / Video từ R2)
             </button>
           </div>
         </div>
@@ -420,9 +422,14 @@ const films = await getFilms(db);
         
         <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
         
-        <!-- Re-crop button -->
+        <!-- Re-crop button (only for images) -->
         <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #545454; color: #ffffff; border-color: #545454; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
           ✂️ Crop lại ảnh
+        </button>
+
+        <!-- Video Loop toggle button (only for video) -->
+        <button type="button" id="btn-video-loop" class="tb-btn" style="display: none; background: #15803d; color: #ffffff; border-color: #15803d; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.3rem;" title="Bật / Tắt chế độ Loop lặp vô tận giả GIF (ẩn thanh thời lượng)">
+          🔁 Giả GIF (Loop)
         </button>
 
         <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
@@ -439,7 +446,7 @@ const films = await getFilms(db);
         <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
 
         <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;">
-          🗑️ Xóa ảnh
+          🗑️ Xóa
         </button>
       </div>
     </div>
@@ -468,7 +475,7 @@ const films = await getFilms(db);
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: INSERT & CROP IMAGE                                              -->
+  <!-- MODAL 1: INSERT & CROP MEDIA (IMAGE / GIF / VIDEO R2)                     -->
   <!-- ========================================================================= -->
   <div id="image-modal" class="modal-overlay">
     <div class="modal-card">
@@ -476,79 +483,158 @@ const films = await getFilms(db);
       <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
         <div>
           <h3 id="modal-title-heading" style="font-size: 1.15rem; font-weight: 700; color: #313030; margin: 0;">
-            Chèn & Chỉnh sửa ảnh (Crop tùy thích)
+            Chèn Media: Ảnh / GIF / Video từ R2
           </h3>
           <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #545454; margin: 0.15rem 0 0 0;">
-            Chọn tỷ lệ có sẵn, tỷ lệ ảnh gốc hoặc tự do kéo thả 4 góc để crop ảnh.
+            Hỗ trợ ảnh tĩnh (kèm Crop tỉ lệ), ảnh động GIF nguyên bản, hoặc Video từ R2 với tùy chọn Loop lặp vô tận giả lập GIF (ẩn thanh thời lượng).
           </p>
         </div>
         <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #545454; cursor: pointer;">✕</button>
       </div>
 
+      <!-- Tab Switcher (hidden when re-cropping) -->
+      <div id="modal-tab-nav" style="display: flex; gap: 0.5rem; padding: 0.75rem 1.5rem 0.5rem 1.5rem; background: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+        <button type="button" id="tab-btn-image" class="tb-btn active" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+          🖼️ Ảnh tĩnh & GIF
+        </button>
+        <button type="button" id="tab-btn-video" class="tb-btn" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+          🎬 Video từ R2 (Tùy chọn Loop giả GIF)
+        </button>
+      </div>
+
       <!-- Modal Body -->
       <div style="padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem;">
-        <!-- Input Choice (hidden if re-cropping existing image) -->
-        <div id="modal-input-sources" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
-          <!-- Option A: Upload to R2 -->
-          <div>
-            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-              Cách 1: Tải ảnh từ máy tính (lên R2)
+        
+        <!-- ================= PANEL 1: IMAGE & GIF ================= -->
+        <div id="panel-media-image" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Input Choice (hidden if re-cropping existing image) -->
+          <div id="modal-input-sources" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
+            <!-- Option A: Upload to R2 -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+                Cách 1: Tải ảnh/GIF từ máy tính (lên R2)
+              </label>
+              <input type="file" id="modal-file-input" accept="image/*,.gif" style="font-size: 0.85rem;" />
+              <div id="modal-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.25rem; font-weight: 600;">
+                ⏳ Đang tải ảnh lên Cloudflare R2...
+              </div>
+            </div>
+
+            <!-- Option B: Paste link -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+                Cách 2: Dán đường dẫn ảnh / GIF (R2 / Web)
+              </label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="modal-link-input" placeholder="https://storage.hiepcm.com/... hoặc .gif" style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+                <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #313030;">Tải ảnh</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GIF Detection Notice & Direct Insert Box -->
+          <div id="modal-gif-notice" style="display: none; background: #f0fdf4; border: 1.5px solid #22c55e; color: #15803d; padding: 0.85rem 1rem; border-radius: 0.5rem; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <strong style="font-size: 0.9rem;">🎉 Đã nhận diện ảnh động GIF!</strong>
+              <div style="font-size: 0.82rem; color: #166534; margin-top: 0.15rem;">
+                Ảnh GIF động sẽ được chèn trực tiếp để giữ nguyên 100% animation mượt mà (không bị cắt khung tĩnh).
+              </div>
+            </div>
+            <button type="button" id="btn-insert-gif-direct" class="btn btn-primary" style="background: #15803d; padding: 0.45rem 1rem; font-size: 0.85rem;">
+              Chèn GIF ngay vào Canvas
+            </button>
+          </div>
+
+          <!-- Re-crop Notice -->
+          <div id="modal-recrop-notice" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; color: #313030; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
+            ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
+          </div>
+
+          <!-- Preview & Crop Workspace -->
+          <div id="modal-cropper-workspace">
+            <!-- Ratio Presets & Cropper Tools Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #545454; margin-right: 0.2rem;">Tỷ lệ:</span>
+                <button type="button" class="btn-crop-ratio tb-btn active" data-ratio="free" title="Kéo 4 góc tự do không giới hạn">Tự do</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="original" title="Giữ đúng tỷ lệ ảnh gốc">Ảnh gốc</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="16:9" title="Tỷ lệ 16:9 ngang chuẩn video/màn hình">16:9</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="4:3" title="Tỷ lệ 4:3 điện ảnh">4:3</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="1:1" title="Tỷ lệ vuông 1:1">1:1</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="3:2" title="Tỷ lệ máy ảnh 3:2">3:2</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="2.39:1" title="Tỷ lệ điện ảnh rộng Cinemascope">2.39:1</button>
+                <button type="button" class="btn-crop-ratio tb-btn" data-ratio="9:16" title="Tỷ lệ khung dọc 9:16">9:16</button>
+              </div>
+
+              <div style="display: flex; gap: 0.35rem;">
+                <button type="button" id="btn-crop-rotate" class="tb-btn" style="font-size: 0.8rem;" title="Xoay ảnh 90 độ">🔄 Xoay 90°</button>
+                <button type="button" id="btn-crop-reset" class="tb-btn" style="font-size: 0.8rem;" title="Đặt lại khung crop">↺ Reset</button>
+              </div>
+            </div>
+
+            <!-- Cropper Container -->
+            <div style="width: 100%; height: 380px; background: #313030; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+              <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
+              <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
+                Chưa có ảnh. Vui lòng chọn file tải lên hoặc dán link ảnh từ R2 vào ô phía trên để bắt đầu Preview & Crop.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PANEL 2: VIDEO (LOOP & GIF SIMULATION) ================= -->
+        <div id="panel-media-video" style="display: none; flex-direction: column; gap: 1.25rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
+            <!-- Option A: Upload Video to R2 -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+                Cách 1: Tải video từ máy tính (lên R2)
+              </label>
+              <input type="file" id="modal-video-file-input" accept="video/*,.mp4,.webm,.mov" style="font-size: 0.85rem;" />
+              <div id="modal-video-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.25rem; font-weight: 600;">
+                ⏳ Đang tải file video lên Cloudflare R2...
+              </div>
+            </div>
+
+            <!-- Option B: Paste Video link -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+                Cách 2: Dán link video (R2 / Web)
+              </label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="modal-video-link-input" placeholder="https://storage.hiepcm.com/...mp4" style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+                <button type="button" id="btn-load-video-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #313030;">Tải video</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video GIF Loop Option Card -->
+          <div style="background: #f0fdf4; border: 1.5px solid #22c55e; padding: 0.85rem 1.15rem; border-radius: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="modal-video-loop-check" checked style="width: 19px; height: 19px; accent-color: #15803d; cursor: pointer;" />
+              <span style="font-size: 0.95rem; font-weight: 700; color: #15803d;">
+                🔁 Bật chế độ Loop để giả lập GIF (Lặp vô tận & Ẩn hoàn toàn thanh thời lượng)
+              </span>
             </label>
-            <input type="file" id="modal-file-input" accept="image/*" style="font-size: 0.85rem;" />
-            <div id="modal-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.25rem; font-weight: 600;">
-              ⏳ Đang tải ảnh lên Cloudflare R2...
-            </div>
+            <p style="font-size: 0.82rem; color: #545454; margin: 0; padding-left: 1.85rem; line-height: 1.4;">
+              Video sẽ tự động chạy liên tục (autoplay loop muted playsinline), <strong>mất hoàn toàn thanh thời lượng và các nút điều khiển</strong>, giả lập y hệt ảnh động GIF chất lượng cao.
+            </p>
           </div>
 
-          <!-- Option B: Paste link -->
+          <!-- Video Live Preview Player -->
           <div>
-            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
-              Cách 2: Dán đường dẫn ảnh (R2 / Web)
-            </label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="modal-link-input" placeholder="https://storage.hiepcm.com/..." style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
-              <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #313030;">Tải ảnh</button>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #545454; margin-bottom: 0.4rem;">
+              Xem trước hiển thị Video:
+            </div>
+            <div id="modal-video-preview-box" style="display: none; width: 100%; height: 350px; background: #000000; border-radius: 0.5rem; overflow: hidden; align-items: center; justify-content: center; position: relative;">
+              <video id="modal-preview-video" style="max-width: 100%; max-height: 100%; display: block; margin: 0 auto;" playsinline></video>
+            </div>
+            <div id="modal-video-empty-placeholder" style="width: 100%; height: 220px; background: #313030; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.92rem; text-align: center; padding: 1rem;">
+              Chưa có video. Vui lòng chọn file tải lên hoặc dán link video từ R2 vào ô phía trên để bắt đầu xem trước.
             </div>
           </div>
         </div>
 
-        <!-- Re-crop Notice -->
-        <div id="modal-recrop-notice" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; color: #313030; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
-          ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
-        </div>
-
-        <!-- Preview & Crop Workspace -->
-        <div>
-          <!-- Ratio Presets & Cropper Tools Bar -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
-            <!-- Aspect Ratio Buttons -->
-            <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
-              <span style="font-size: 0.8rem; font-weight: 700; color: #545454; margin-right: 0.2rem;">Tỷ lệ:</span>
-              <button type="button" class="btn-crop-ratio tb-btn active" data-ratio="free" title="Kéo 4 góc tự do không giới hạn">Tự do</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="original" title="Giữ đúng tỷ lệ ảnh gốc nhưng cho phép co nhỏ lại để cắt bớt viền">Ảnh gốc</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="16:9" title="Tỷ lệ 16:9 ngang chuẩn video/màn hình">16:9</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="4:3" title="Tỷ lệ 4:3 điện ảnh truyền thống">4:3</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="1:1" title="Tỷ lệ vuông 1:1">1:1</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="3:2" title="Tỷ lệ máy ảnh 3:2">3:2</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="2.39:1" title="Tỷ lệ điện ảnh rộng Cinemascope">2.39:1</button>
-              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="9:16" title="Tỷ lệ khung dọc 9:16">9:16</button>
-            </div>
-
-            <!-- Cropper Controls -->
-            <div style="display: flex; gap: 0.35rem;">
-              <button type="button" id="btn-crop-rotate" class="tb-btn" style="font-size: 0.8rem;" title="Xoay ảnh 90 độ">🔄 Xoay 90°</button>
-              <button type="button" id="btn-crop-reset" class="tb-btn" style="font-size: 0.8rem;" title="Đặt lại khung crop">↺ Reset</button>
-            </div>
-          </div>
-
-          <!-- Cropper Container -->
-          <div style="width: 100%; height: 380px; background: #313030; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
-            <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
-            <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
-              Chưa có ảnh. Vui lòng chọn file tải lên hoặc dán link ảnh từ R2 vào ô phía trên để bắt đầu Preview & Crop.
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Modal Footer -->
@@ -563,7 +649,6 @@ const films = await getFilms(db);
     </div>
   </div>
 
-  <!-- ========================================================================= -->
   <!-- MODAL 2: FULL WEBSITE PREVIEW (Khớp font & cỡ chữ chính xác)             -->
   <!-- ========================================================================= -->
   <div id="preview-modal" class="modal-overlay" style="padding: 0; background: #ffffff;">
@@ -698,6 +783,29 @@ const films = await getFilms(db);
     const btnImgMoveDown = document.getElementById('btn-img-move-down');
     const btnImgDelete = document.getElementById('btn-img-delete');
     let selectedImageElement = null;
+
+    // Tabs & Video Elements
+    let currentMediaTab = 'image';
+    let currentVideoUrl = '';
+    let currentLoadedGifUrl = '';
+    const tabBtnImage = document.getElementById('tab-btn-image');
+    const tabBtnVideo = document.getElementById('tab-btn-video');
+    const panelMediaImage = document.getElementById('panel-media-image');
+    const panelMediaVideo = document.getElementById('panel-media-video');
+    const modalTabNav = document.getElementById('modal-tab-nav');
+    const modalGifNotice = document.getElementById('modal-gif-notice');
+    const btnInsertGifDirect = document.getElementById('btn-insert-gif-direct');
+    const modalCropperWorkspace = document.getElementById('modal-cropper-workspace');
+
+    const modalVideoFileInput = document.getElementById('modal-video-file-input');
+    const modalVideoUploadLoading = document.getElementById('modal-video-upload-loading');
+    const modalVideoLinkInput = document.getElementById('modal-video-link-input');
+    const btnLoadVideoLink = document.getElementById('btn-load-video-link');
+    const modalVideoLoopCheck = document.getElementById('modal-video-loop-check');
+    const modalVideoPreviewBox = document.getElementById('modal-video-preview-box');
+    const modalPreviewVideo = document.getElementById('modal-preview-video');
+    const modalVideoEmptyPlaceholder = document.getElementById('modal-video-empty-placeholder');
+    const btnVideoLoop = document.getElementById('btn-video-loop');
 
     // Full Preview Elements
     const previewModal = document.getElementById('preview-modal');
@@ -1028,7 +1136,7 @@ const films = await getFilms(db);
       recordHistory(true);
     });
 
-    // 5. Image Modal & Crop System
+    // 5. Image / GIF / Video Modal & Media Handling
     btnInsertImage.addEventListener('click', () => {
       isReCropping = false;
       activeReCropImg = null;
@@ -1038,6 +1146,27 @@ const films = await getFilms(db);
       }
       openImageModal(false);
     });
+
+    function switchMediaTab(tab) {
+      currentMediaTab = tab;
+      if (tab === 'image') {
+        tabBtnImage.classList.add('active');
+        tabBtnVideo.classList.remove('active');
+        panelMediaImage.style.display = 'flex';
+        panelMediaVideo.style.display = 'none';
+        modalSaveBtn.innerText = currentLoadedGifUrl ? 'Save & Chèn GIF vào Canvas' : 'Save & Chèn vào Canvas';
+        modalSaveBtn.disabled = !cropper && !currentLoadedGifUrl;
+      } else {
+        tabBtnVideo.classList.add('active');
+        tabBtnImage.classList.remove('active');
+        panelMediaVideo.style.display = 'flex';
+        panelMediaImage.style.display = 'none';
+        modalSaveBtn.innerText = 'Save & Chèn Video vào Canvas';
+        modalSaveBtn.disabled = !currentVideoUrl;
+      }
+    }
+    tabBtnImage.addEventListener('click', () => switchMediaTab('image'));
+    tabBtnVideo.addEventListener('click', () => switchMediaTab('video'));
 
     function openImageModal(forReCrop = false) {
       imgModal.style.display = 'flex';
@@ -1056,15 +1185,26 @@ const films = await getFilms(db);
         modalSubHeading.innerText = 'Chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do để cắt ảnh tùy thích.';
         modalInputSources.style.display = 'none';
         modalRecropNotice.style.display = 'block';
+        modalTabNav.style.display = 'none';
+        panelMediaImage.style.display = 'flex';
+        panelMediaVideo.style.display = 'none';
         modalSaveBtn.innerText = 'Save & Cập nhật ảnh';
       } else {
-        modalHeading.innerText = 'Chèn & Chỉnh sửa ảnh (Crop tùy thích)';
-        modalSubHeading.innerText = 'Tải ảnh lên Cloudflare R2 hoặc dán link R2, chọn tỷ lệ crop tùy thích trước khi insert.';
+        modalHeading.innerText = 'Chèn Media: Ảnh / GIF / Video từ R2';
+        modalSubHeading.innerText = 'Tải lên hoặc dán link R2 cho ảnh, GIF động và Video. Video có nút chọn Loop lặp vô tận giả GIF.';
         modalInputSources.style.display = 'grid';
         modalRecropNotice.style.display = 'none';
-        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+        modalTabNav.style.display = 'flex';
         modalFileInput.value = '';
         modalLinkInput.value = '';
+        modalVideoFileInput.value = '';
+        modalVideoLinkInput.value = '';
+        currentVideoUrl = '';
+        currentLoadedGifUrl = '';
+        modalGifNotice.style.display = 'none';
+        modalVideoPreviewBox.style.display = 'none';
+        modalVideoEmptyPlaceholder.style.display = 'flex';
+        switchMediaTab('image');
       }
 
       if (cropper) {
@@ -1079,6 +1219,15 @@ const films = await getFilms(db);
         cropper.destroy();
         cropper = null;
       }
+      if (modalPreviewVideo) {
+        modalPreviewVideo.pause();
+        modalPreviewVideo.src = '';
+      }
+      currentVideoUrl = '';
+      currentLoadedGifUrl = '';
+      modalVideoPreviewBox.style.display = 'none';
+      modalVideoEmptyPlaceholder.style.display = 'flex';
+      modalGifNotice.style.display = 'none';
       isReCropping = false;
       isThumbnailCrop = false;
       activeReCropImg = null;
@@ -1146,17 +1295,30 @@ const films = await getFilms(db);
       });
     }
 
+    // Image & GIF Upload / Load Link
+    function checkAndHandleGif(url, file) {
+      const isGif = (file && (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif'))) ||
+                    (url && url.toLowerCase().includes('.gif'));
+      if (isGif) {
+        currentLoadedGifUrl = url;
+        modalGifNotice.style.display = 'flex';
+        modalSaveBtn.innerText = 'Save & Chèn GIF vào Canvas';
+        modalSaveBtn.disabled = false;
+      } else {
+        currentLoadedGifUrl = '';
+        modalGifNotice.style.display = 'none';
+        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+      }
+      return isGif;
+    }
+
     modalFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       modalUploadLoading.style.display = 'block';
 
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        setupCropper(loadEvt.target.result);
-      };
-      reader.readAsDataURL(file);
+      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
 
       const formData = new FormData();
       formData.append('file', file);
@@ -1165,20 +1327,39 @@ const films = await getFilms(db);
         const data = await res.json();
         if (data.success && data.url) {
           modalLinkInput.value = data.url;
+          if (isGif) {
+            checkAndHandleGif(data.url, file);
+          }
         }
       } catch (err) {
         console.warn('R2 background upload error:', err);
       } finally {
         modalUploadLoading.style.display = 'none';
       }
+
+      if (!isGif) {
+        const reader = new FileReader();
+        reader.onload = (loadEvt) => {
+          setupCropper(loadEvt.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (loadEvt) => {
+          checkAndHandleGif(modalLinkInput.value || loadEvt.target.result, file);
+          setupCropper(loadEvt.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
     });
 
     btnLoadLink.addEventListener('click', () => {
       const url = modalLinkInput.value.trim();
       if (!url) {
-        alert('Vui lòng dán link ảnh từ R2 hoặc Web vào ô nhập liệu.');
+        alert('Vui lòng dán link ảnh/GIF từ R2 hoặc Web vào ô nhập liệu.');
         return;
       }
+      checkAndHandleGif(url, null);
       setupCropper(url);
     });
 
@@ -1190,8 +1371,191 @@ const films = await getFilms(db);
       if (cropper) cropper.reset();
     });
 
-    // Save Cropped Image (Insert New OR Re-Crop)
+    // Video Upload / Load Link / Setup Preview
+    function setupVideoPreview(url) {
+      if (!url) return;
+      currentVideoUrl = url;
+      modalVideoEmptyPlaceholder.style.display = 'none';
+      modalVideoPreviewBox.style.display = 'flex';
+      modalPreviewVideo.src = url;
+
+      const isLoop = modalVideoLoopCheck.checked;
+      if (isLoop) {
+        modalPreviewVideo.autoplay = true;
+        modalPreviewVideo.loop = true;
+        modalPreviewVideo.muted = true;
+        modalPreviewVideo.removeAttribute('controls');
+        modalPreviewVideo.style.pointerEvents = 'none';
+        modalPreviewVideo.play().catch(() => {});
+      } else {
+        modalPreviewVideo.autoplay = false;
+        modalPreviewVideo.loop = false;
+        modalPreviewVideo.muted = false;
+        modalPreviewVideo.setAttribute('controls', '');
+        modalPreviewVideo.style.pointerEvents = 'auto';
+        modalPreviewVideo.pause();
+      }
+
+      if (currentMediaTab === 'video') {
+        modalSaveBtn.disabled = false;
+      }
+    }
+
+    modalVideoLoopCheck.addEventListener('change', () => {
+      if (currentVideoUrl) {
+        setupVideoPreview(currentVideoUrl);
+      }
+    });
+
+    modalVideoFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      modalVideoUploadLoading.style.display = 'block';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success && data.url) {
+          modalVideoLinkInput.value = data.url;
+          setupVideoPreview(data.url);
+        } else {
+          alert('Tải video lên R2 thất bại: ' + (data.error || 'Lỗi server'));
+        }
+      } catch (err) {
+        alert('Lỗi kết nối khi tải video lên R2.');
+      } finally {
+        modalVideoUploadLoading.style.display = 'none';
+      }
+    });
+
+    btnLoadVideoLink.addEventListener('click', () => {
+      const url = modalVideoLinkInput.value.trim();
+      if (!url) {
+        alert('Vui lòng dán link video từ R2 vào ô nhập liệu.');
+        return;
+      }
+      setupVideoPreview(url);
+    });
+
+    // Helper: Insert Video into Canvas
+    function insertVideoIntoCanvas(videoUrl, isLoop) {
+      canvasEditor.focus();
+      if (savedSelectionRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedSelectionRange);
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'canvas-img-wrapper';
+      wrapper.setAttribute('draggable', 'true');
+      wrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+      const video = document.createElement('video');
+      video.src = videoUrl;
+      video.setAttribute('playsinline', '');
+
+      if (isLoop) {
+        video.setAttribute('autoplay', '');
+        video.setAttribute('loop', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('disablepictureinpicture', '');
+        video.setAttribute('controlslist', 'nodownload nofullscreen noremoteplayback');
+        video.removeAttribute('controls');
+        video.setAttribute('data-loop', 'true');
+        video.style.cssText = 'width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
+        video.play().catch(() => {});
+      } else {
+        video.removeAttribute('autoplay');
+        video.removeAttribute('loop');
+        video.removeAttribute('muted');
+        video.setAttribute('controls', '');
+        video.setAttribute('preload', 'metadata');
+        video.setAttribute('data-loop', 'false');
+        video.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
+      }
+
+      wrapper.appendChild(video);
+
+      const pAfter = document.createElement('p');
+      pAfter.style.cssText = 'font-size: 15px; color: #313030;';
+      pAfter.innerHTML = '<br/>';
+
+      if (savedSelectionRange) {
+        savedSelectionRange.insertNode(pAfter);
+        savedSelectionRange.insertNode(wrapper);
+      } else {
+        canvasEditor.appendChild(wrapper);
+        canvasEditor.appendChild(pAfter);
+      }
+
+      attachDragEventsToWrapper(wrapper);
+      recordHistory(true);
+      closeImageModal();
+    }
+
+    // Helper: Insert GIF into Canvas (bypassing cropper to keep animations)
+    function insertGifIntoCanvas(gifUrl) {
+      canvasEditor.focus();
+      if (savedSelectionRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedSelectionRange);
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'canvas-img-wrapper';
+      wrapper.setAttribute('draggable', 'true');
+      wrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+      const img = document.createElement('img');
+      img.src = gifUrl;
+      img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
+      wrapper.appendChild(img);
+
+      const pAfter = document.createElement('p');
+      pAfter.style.cssText = 'font-size: 15px; color: #313030;';
+      pAfter.innerHTML = '<br/>';
+
+      if (savedSelectionRange) {
+        savedSelectionRange.insertNode(pAfter);
+        savedSelectionRange.insertNode(wrapper);
+      } else {
+        canvasEditor.appendChild(wrapper);
+        canvasEditor.appendChild(pAfter);
+      }
+
+      attachDragEventsToWrapper(wrapper);
+      recordHistory(true);
+      closeImageModal();
+    }
+
+    btnInsertGifDirect.addEventListener('click', () => {
+      const url = currentLoadedGifUrl || modalLinkInput.value.trim();
+      if (url) {
+        insertGifIntoCanvas(url);
+      }
+    });
+
+    // Save Action from Modal (Image, GIF, or Video)
     modalSaveBtn.addEventListener('click', async () => {
+      // 1. If Video Tab active
+      if (currentMediaTab === 'video') {
+        if (!currentVideoUrl) return;
+        const isLoop = modalVideoLoopCheck.checked;
+        insertVideoIntoCanvas(currentVideoUrl, isLoop);
+        return;
+      }
+
+      // 2. If GIF detected and user chose to save GIF
+      if (currentLoadedGifUrl && !cropper) {
+        insertGifIntoCanvas(currentLoadedGifUrl);
+        return;
+      }
+
+      // 3. Static Image Cropper
       if (!cropper) return;
 
       modalSaveBtn.disabled = true;
@@ -1245,7 +1609,7 @@ const films = await getFilms(db);
 
           const img = document.createElement('img');
           img.src = finalImageUrl;
-          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
+          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
           imgWrapper.appendChild(img);
 
           const pAfter = document.createElement('p');
@@ -1270,9 +1634,9 @@ const films = await getFilms(db);
       }, 'image/png');
     });
 
-    // 6. Floating Image Toolbar & Re-Crop & Move Position
-    function positionFloatingToolbar(img) {
-      const rect = img.getBoundingClientRect();
+    // 6. Floating Media Toolbar & Loop Toggle & Move Position
+    function positionFloatingToolbar(el) {
+      const rect = el.getBoundingClientRect();
       imgFloatingToolbar.style.display = 'flex';
       imgFloatingToolbar.style.top = `${window.scrollY + rect.top - 46}px`;
       imgFloatingToolbar.style.left = `${Math.max(10, window.scrollX + rect.left)}px`;
@@ -1280,13 +1644,31 @@ const films = await getFilms(db);
 
     canvasEditor.addEventListener('click', (e) => {
       const target = e.target;
-      if (target.tagName === 'IMG') {
+      if (target.tagName === 'IMG' || target.tagName === 'VIDEO') {
         if (selectedImageElement) {
           selectedImageElement.classList.remove('selected-img');
         }
         selectedImageElement = target;
         selectedImageElement.classList.add('selected-img');
         positionFloatingToolbar(target);
+
+        if (target.tagName === 'VIDEO') {
+          btnImgRecrop.style.display = 'none';
+          btnVideoLoop.style.display = 'inline-flex';
+          const isLoop = target.getAttribute('data-loop') === 'true' || target.hasAttribute('loop');
+          if (isLoop) {
+            btnVideoLoop.innerText = '🔁 Đang Loop giả GIF';
+            btnVideoLoop.style.background = '#15803d';
+            btnVideoLoop.style.borderColor = '#15803d';
+          } else {
+            btnVideoLoop.innerText = '▶ Đang có điều khiển';
+            btnVideoLoop.style.background = '#545454';
+            btnVideoLoop.style.borderColor = '#545454';
+          }
+        } else {
+          btnImgRecrop.style.display = 'inline-flex';
+          btnVideoLoop.style.display = 'none';
+        }
       } else if (!e.target.closest('#img-floating-toolbar')) {
         if (selectedImageElement) {
           selectedImageElement.classList.remove('selected-img');
@@ -1296,7 +1678,44 @@ const films = await getFilms(db);
       }
     });
 
-    // A: Size Buttons
+    // Video Loop Toggle Button in Floating Bar
+    btnVideoLoop.addEventListener('click', () => {
+      if (!selectedImageElement || selectedImageElement.tagName !== 'VIDEO') return;
+      const isLoop = selectedImageElement.getAttribute('data-loop') === 'true' || selectedImageElement.hasAttribute('loop');
+      if (isLoop) {
+        // Switch to regular video with controls
+        selectedImageElement.removeAttribute('autoplay');
+        selectedImageElement.removeAttribute('loop');
+        selectedImageElement.removeAttribute('muted');
+        selectedImageElement.removeAttribute('disablepictureinpicture');
+        selectedImageElement.removeAttribute('controlslist');
+        selectedImageElement.setAttribute('controls', '');
+        selectedImageElement.setAttribute('preload', 'metadata');
+        selectedImageElement.setAttribute('data-loop', 'false');
+        selectedImageElement.pause();
+        btnVideoLoop.innerText = '▶ Đang có điều khiển';
+        btnVideoLoop.style.background = '#545454';
+        btnVideoLoop.style.borderColor = '#545454';
+      } else {
+        // Switch to loop simulated GIF (hidden controls/duration bar)
+        selectedImageElement.setAttribute('autoplay', '');
+        selectedImageElement.setAttribute('loop', '');
+        selectedImageElement.setAttribute('muted', '');
+        selectedImageElement.setAttribute('playsinline', '');
+        selectedImageElement.setAttribute('disablepictureinpicture', '');
+        selectedImageElement.setAttribute('controlslist', 'nodownload nofullscreen noremoteplayback');
+        selectedImageElement.removeAttribute('controls');
+        selectedImageElement.setAttribute('data-loop', 'true');
+        selectedImageElement.play().catch(() => {});
+        btnVideoLoop.innerText = '🔁 Đang Loop giả GIF';
+        btnVideoLoop.style.background = '#15803d';
+        btnVideoLoop.style.borderColor = '#15803d';
+      }
+      positionFloatingToolbar(selectedImageElement);
+      recordHistory(true);
+    });
+
+    // A: Size Buttons (Works for both img & video)
     document.querySelectorAll('.btn-img-size').forEach(btn => {
       btn.addEventListener('click', () => {
         if (selectedImageElement) {
@@ -1311,14 +1730,14 @@ const films = await getFilms(db);
 
     // B: RE-CROP EXISTING IMAGE
     btnImgRecrop.addEventListener('click', () => {
-      if (!selectedImageElement) return;
+      if (!selectedImageElement || selectedImageElement.tagName !== 'IMG') return;
       isReCropping = true;
       activeReCropImg = selectedImageElement;
       openImageModal(true);
       setupCropper(selectedImageElement.src);
     });
 
-    // C: MOVE IMAGE UP
+    // C: MOVE MEDIA UP
     btnImgMoveUp.addEventListener('click', () => {
       if (!selectedImageElement) return;
       const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
@@ -1332,7 +1751,7 @@ const films = await getFilms(db);
       }
     });
 
-    // D: MOVE IMAGE DOWN
+    // D: MOVE MEDIA DOWN
     btnImgMoveDown.addEventListener('click', () => {
       if (!selectedImageElement) return;
       const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
@@ -1346,7 +1765,7 @@ const films = await getFilms(db);
       }
     });
 
-    // E: Delete Image Button
+    // E: Delete Media Button
     btnImgDelete.addEventListener('click', () => {
       if (selectedImageElement) {
         const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
@@ -1360,7 +1779,7 @@ const films = await getFilms(db);
       }
     });
 
-    // 7. DRAG-AND-DROP REORDERING OF IMAGES BETWEEN TEXT & IMAGES
+    // 7. DRAG-AND-DROP REORDERING OF MEDIA BETWEEN TEXT & MEDIA
     function attachDragEventsToWrapper(wrapper) {
       wrapper.setAttribute('draggable', 'true');
 
@@ -1412,6 +1831,7 @@ const films = await getFilms(db);
     canvasEditor.addEventListener('drop', (e) => {
       if (!draggedWrapper) return;
       e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
 
       const target = e.target.closest('#canvas-editor > *');
       if (target && target !== draggedWrapper) {
@@ -1436,18 +1856,24 @@ const films = await getFilms(db);
     });
 
     function ensureDraggableImages() {
-      const allImgs = canvasEditor.querySelectorAll('img');
-      allImgs.forEach(img => {
-        let wrapper = img.closest('.canvas-img-wrapper');
+      const allMedia = canvasEditor.querySelectorAll('img, video');
+      allMedia.forEach(media => {
+        let wrapper = media.closest('.canvas-img-wrapper');
         if (!wrapper) {
           wrapper = document.createElement('div');
           wrapper.className = 'canvas-img-wrapper';
           wrapper.setAttribute('draggable', 'true');
           wrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
-          img.parentNode.insertBefore(wrapper, img);
-          wrapper.appendChild(img);
+          media.parentNode.insertBefore(wrapper, media);
+          wrapper.appendChild(media);
         }
         attachDragEventsToWrapper(wrapper);
+
+        // Ensure loop videos in editor play muted
+        if (media.tagName === 'VIDEO' && (media.getAttribute('data-loop') === 'true' || media.hasAttribute('loop'))) {
+          media.muted = true;
+          media.play().catch(() => {});
+        }
       });
     }
 
@@ -1483,6 +1909,14 @@ const films = await getFilms(db);
       previewCanvasRender.style.fontSize = "15px";
       previewCanvasRender.style.lineHeight = "1.4";
       previewCanvasRender.style.color = "#313030";
+      setTimeout(() => {
+        previewCanvasRender.querySelectorAll('video').forEach(v => {
+          if (v.getAttribute('data-loop') === 'true' || v.hasAttribute('loop')) {
+            v.muted = true;
+            v.play().catch(() => {});
+          }
+        });
+      }, 50);
 
       // Credit: font Inter, cỡ chữ 13px: role #545454, name #313030
       previewFilmCredits.innerHTML = '';

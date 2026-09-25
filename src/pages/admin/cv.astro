@@ -131,7 +131,17 @@ const initialHTML = cv.content_html || defaultCVHTML;
     }
     #canvas-editor a {
       color: #313030;
-      text-decoration: underline;
+      text-decoration: underline !important;
+      text-underline-offset: 4px;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    #canvas-editor a:hover {
+      color: #545454;
+    }
+    #preview-cv-render a {
+      color: #313030;
+      text-decoration: underline !important;
       text-underline-offset: 4px;
     }
     /* Draggable Image Wrappers */
@@ -285,6 +295,17 @@ const initialHTML = cv.content_html || defaultCVHTML;
           <button type="button" class="tb-btn" onclick="document.execCommand('strikeThrough', false, ''); setTimeout(() => recordHistory(true), 50);" title="Gạch ngang (Strikethrough)"><s>S</s></button>
         </div>
 
+        <!-- Embed URL / Link Group -->
+        <div class="tb-group">
+          <button type="button" id="tb-link" class="tb-btn" title="Nhúng liên kết URL (tự động gạch chân - Ctrl+K / Cmd+K)" style="gap: 0.35rem; color: #313030;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>🔗 Chèn Link</span>
+          </button>
+          <button type="button" id="tb-unlink" class="tb-btn" title="Gỡ bỏ liên kết" style="display: none; padding: 0 0.4rem; font-size: 0.78rem; color: #dc2626;">
+            ✕ Bỏ Link
+          </button>
+        </div>
+
         <!-- Alignment -->
         <div class="tb-group">
           <button type="button" class="tb-btn" onclick="document.execCommand('justifyLeft', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn trái">
@@ -433,6 +454,76 @@ const initialHTML = cv.content_html || defaultCVHTML;
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: EMBED URL / CHÈN LIÊN KẾT                                           -->
+  <!-- ========================================================================= -->
+  <div id="link-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #313030; margin: 0;">
+            🔗 Nhúng liên kết (Embed URL)
+          </h3>
+          <p style="font-size: 0.82rem; color: #545454; margin: 0.15rem 0 0 0;">
+            Tự động gạch chân text (underline) theo đúng chuẩn thẩm mỹ của website.
+          </p>
+        </div>
+        <button type="button" id="btn-link-modal-close" style="background: none; border: none; font-size: 1.4rem; color: #545454; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.15rem;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.35rem;">
+            Văn bản hiển thị (Text):
+          </label>
+          <input 
+            type="text" 
+            id="link-text-input" 
+            placeholder="Ví dụ: CJ Short Film Project hoặc Xem thông tin..."
+            style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; color: #313030;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.35rem;">
+            Đường dẫn liên kết (URL):
+          </label>
+          <input 
+            type="text" 
+            id="link-url-input" 
+            placeholder="https://... hoặc mailto:... hoặc /films/..."
+            style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.9rem; color: #313030; font-family: monospace;"
+          />
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <input type="checkbox" id="link-target-blank" checked style="width: 17px; height: 17px; accent-color: #313030; cursor: pointer;" />
+          <label for="link-target-blank" style="font-size: 0.85rem; color: #313030; cursor: pointer; user-select: none;">
+            Mở trong tab mới (<code>target="_blank"</code>)
+          </label>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #545454; line-height: 1.4;">
+          💡 <strong>Tự động gạch chân:</strong> Văn bản chứa liên kết sẽ tự động được gạch chân (<code>text-decoration: underline !important; text-underline-offset: 4px;</code>) rõ ràng, tinh tế.
+        </div>
+      </div>
+
+      <div style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <button type="button" id="btn-link-remove" class="btn btn-outline" style="color: #dc2626; border-color: #fecaca; display: none; font-size: 0.82rem; padding: 0.45rem 0.75rem;">
+          🗑️ Gỡ bỏ link
+        </button>
+        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+          <button type="button" id="btn-link-modal-cancel" class="btn btn-outline" style="color: #545454; border-color: #cbd5e1; font-size: 0.85rem;">
+            Hủy
+          </button>
+          <button type="button" id="btn-link-modal-save" class="btn btn-primary" style="background: #313030; font-size: 0.85rem;">
+            Chèn Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- MODAL 2: FULL WEBSITE PREVIEW (/cv)                                       -->
   <!-- ========================================================================= -->
   <div id="preview-modal" class="modal-overlay" style="padding: 0; background: #ffffff;">
@@ -483,6 +574,19 @@ const initialHTML = cv.content_html || defaultCVHTML;
     const tbFormatBlock = document.getElementById('tb-formatblock');
     const tbFontSize = document.getElementById('tb-fontsize');
     const tbColor = document.getElementById('tb-color');
+    const tbLink = document.getElementById('tb-link');
+    const tbUnlink = document.getElementById('tb-unlink');
+    const linkModal = document.getElementById('link-modal');
+    const linkTextInput = document.getElementById('link-text-input');
+    const linkUrlInput = document.getElementById('link-url-input');
+    const linkTargetBlank = document.getElementById('link-target-blank');
+    const btnLinkModalClose = document.getElementById('btn-link-modal-close');
+    const btnLinkModalCancel = document.getElementById('btn-link-modal-cancel');
+    const btnLinkModalSave = document.getElementById('btn-link-modal-save');
+    const btnLinkRemove = document.getElementById('btn-link-remove');
+
+    let savedLinkRange = null;
+    let activeLinkElement = null;
     const tbLineHeight = document.getElementById('tb-lineheight');
     const btnInsertImage = document.getElementById('btn-insert-image');
 
@@ -579,9 +683,178 @@ const initialHTML = cv.content_html || defaultCVHTML;
       debounceTimer = setTimeout(() => recordHistory(), 400);
     });
 
+    
+    // Link Modal & Embed URL Logic
+    function openLinkModal() {
+      const sel = window.getSelection();
+      activeLinkElement = null;
+      let selectedText = '';
+
+      if (sel && sel.rangeCount > 0) {
+        savedLinkRange = sel.getRangeAt(0).cloneRange();
+        selectedText = sel.toString();
+
+        let node = sel.anchorNode;
+        while (node && node !== canvasEditor) {
+          if (node.tagName === 'A') {
+            activeLinkElement = node;
+            break;
+          }
+          node = node.parentNode;
+        }
+      }
+
+      if (activeLinkElement) {
+        linkTextInput.value = activeLinkElement.innerText;
+        linkUrlInput.value = activeLinkElement.getAttribute('href') || '';
+        linkTargetBlank.checked = activeLinkElement.getAttribute('target') === '_blank';
+        btnLinkRemove.style.display = 'inline-flex';
+        btnLinkModalSave.innerText = 'Cập nhật Link';
+      } else {
+        linkTextInput.value = selectedText;
+        linkUrlInput.value = '';
+        linkTargetBlank.checked = true;
+        btnLinkRemove.style.display = 'none';
+        btnLinkModalSave.innerText = 'Chèn Link';
+      }
+
+      linkModal.style.display = 'flex';
+      setTimeout(() => {
+        if (!linkTextInput.value) {
+          linkTextInput.focus();
+        } else {
+          linkUrlInput.focus();
+        }
+      }, 50);
+    }
+
+    function closeLinkModal() {
+      linkModal.style.display = 'none';
+      activeLinkElement = null;
+      savedLinkRange = null;
+    }
+
+    tbLink.addEventListener('click', openLinkModal);
+    btnLinkModalClose.addEventListener('click', closeLinkModal);
+    btnLinkModalCancel.addEventListener('click', closeLinkModal);
+
+    btnLinkModalSave.addEventListener('click', () => {
+      let url = linkUrlInput.value.trim();
+      const text = linkTextInput.value.trim() || url;
+
+      if (!url) {
+        alert('Vui lòng nhập địa chỉ liên kết (URL).');
+        return;
+      }
+
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('mailto:') && !url.startsWith('tel:') && !url.startsWith('/') && !url.startsWith('#')) {
+        url = 'https://' + url;
+      }
+
+      const isTargetBlank = linkTargetBlank.checked;
+
+      canvasEditor.focus();
+
+      if (activeLinkElement) {
+        activeLinkElement.setAttribute('href', url);
+        activeLinkElement.innerText = text;
+        if (isTargetBlank) {
+          activeLinkElement.setAttribute('target', '_blank');
+          activeLinkElement.setAttribute('rel', 'noopener noreferrer');
+        } else {
+          activeLinkElement.removeAttribute('target');
+          activeLinkElement.removeAttribute('rel');
+        }
+        activeLinkElement.style.cssText = 'color: #313030; text-decoration: underline !important; text-underline-offset: 4px; cursor: pointer;';
+      } else {
+        if (savedLinkRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedLinkRange);
+        }
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.innerText = text;
+        a.style.cssText = 'color: #313030; text-decoration: underline !important; text-underline-offset: 4px; cursor: pointer;';
+        if (isTargetBlank) {
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
+        }
+
+        if (savedLinkRange && !savedLinkRange.collapsed) {
+          savedLinkRange.deleteContents();
+          savedLinkRange.insertNode(a);
+        } else {
+          document.execCommand('insertHTML', false, a.outerHTML);
+        }
+      }
+
+      closeLinkModal();
+      recordHistory(true);
+    });
+
+    btnLinkRemove.addEventListener('click', () => {
+      if (activeLinkElement) {
+        const text = activeLinkElement.innerText;
+        const textNode = document.createTextNode(text);
+        activeLinkElement.parentNode.replaceChild(textNode, activeLinkElement);
+        closeLinkModal();
+        recordHistory(true);
+      }
+    });
+
+    tbUnlink.addEventListener('click', () => {
+      document.execCommand('unlink', false, null);
+      tbUnlink.style.display = 'none';
+      recordHistory(true);
+    });
+
+    // Detect if cursor is inside a link
+    function updateLinkButtonState() {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      let node = sel.anchorNode;
+      let insideLink = false;
+      while (node && node !== canvasEditor) {
+        if (node.tagName === 'A') {
+          insideLink = true;
+          break;
+        }
+        node = node.parentNode;
+      }
+      if (insideLink) {
+        tbLink.classList.add('active');
+        tbUnlink.style.display = 'inline-flex';
+      } else {
+        tbLink.classList.remove('active');
+        tbUnlink.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('selectionchange', () => {
+      if (document.activeElement === canvasEditor || canvasEditor.contains(document.activeElement)) {
+        updateLinkButtonState();
+      }
+    });
+
+    // Prevent default jump when clicking links inside canvas editor & allow instant editing
+    canvasEditor.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target.tagName === 'A') {
+        e.preventDefault();
+        activeLinkElement = target;
+        openLinkModal();
+      }
+    });
+
     window.addEventListener('keydown', (e) => {
       if (document.activeElement === canvasEditor || canvasEditor.contains(document.activeElement) || selectedImageElement) {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          openLinkModal();
+          return;
+        } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
           if (e.shiftKey) { e.preventDefault(); redo(); }
           else { e.preventDefault(); undo(); }
         } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {

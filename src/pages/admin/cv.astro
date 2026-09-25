@@ -6,366 +6,995 @@ export const prerender = false;
 
 const db = Astro.locals.runtime?.env?.DB;
 const cv = await getCVData(db);
+
+const defaultCVHTML = `<h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 12px; margin-top: 0;">Grant</h2><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 32px;"><span style="font-weight: 500; color: #313030;">Grant: </span>CJ Short Film Project, CJ Cultural Foundation & CJ CGV Vietnam, 2025</p><h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 12px;">Workshop</h2><p style="font-size: 16px; line-height: 1.4; color: #313030; font-weight: 500; margin-bottom: 4px;">KAFA Training program</p><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 16px;">Korean Academy of Film Arts, HCMC, 2025</p><p style="font-size: 16px; line-height: 1.4; color: #313030; font-weight: 500; margin-bottom: 4px;">Direct cinema workshop, Trần Phương Thảo & Swann Dubus</p><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 32px;">Varan Vietnam, Hanoi, 2024</p><h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 12px;">Education</h2><p style="font-size: 16px; line-height: 1.4; color: #313030; font-weight: 500; margin-bottom: 4px;">Bachelor of Art in Film Directing</p><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 32px;">Hanoi Academy of Theater and Cinema</p><h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 12px;">Selected screening</h2><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 8px;">Atelier Varan, Paris, 2026</p><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 8px;">Queer Museum, Hanoi, 2025</p><p style="font-size: 16px; line-height: 1.4; color: #545454; margin-bottom: 8px;">Konima Cinema, KONIMA 11, HCMC, 2025</p>`;
+
+const initialHTML = cv.content_html || defaultCVHTML;
 ---
 
-<AdminLayout title="Chỉnh sửa CV" activeTab="cv">
-  <!-- Header -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<AdminLayout title="Canvas Quản trị CV" activeTab="cv">
+  <!-- Cropper.js CDN for Free Cropping & Ratios -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+  <!-- Google Fonts for Web Preview -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style is:global>
+    /* Canvas Editor Specific Styling */
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 0.5rem;
+      border-top-right-radius: 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .tb-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      padding-right: 0.5rem;
+      margin-right: 0.35rem;
+      border-right: 1px solid #cbd5e1;
+    }
+    .tb-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #313030;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      min-width: 32px;
+      transition: all 0.15s ease;
+    }
+    .tb-btn:hover:not(:disabled) {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #313030;
+    }
+    .tb-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+      color: #94a3b8 !important;
+    }
+    .tb-btn.active {
+      background: #313030 !important;
+      color: #ffffff !important;
+      border-color: #313030 !important;
+    }
+    .tb-select {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      color: #313030;
+      height: 32px;
+      cursor: pointer;
+    }
+    /* Canvas Area: Font Inter, Cỡ chữ 16px, Màu #313030, Giãn dòng 1.4 */
+    #canvas-editor {
+      min-height: 540px;
+      padding: 2.25rem;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-bottom-left-radius: 0.5rem;
+      border-bottom-right-radius: 0.5rem;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #313030;
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+      position: relative;
+    }
+    #canvas-editor:focus {
+      border-color: #94a3b8;
+    }
+    #canvas-editor h2,
+    #canvas-editor h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #313030;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    #canvas-editor h2:first-child,
+    #canvas-editor h3:first-child {
+      margin-top: 0;
+    }
+    #canvas-editor p {
+      font-size: 16px;
+      line-height: 1.4;
+      color: #313030;
+      margin-bottom: 1rem;
+      min-height: 1.4rem;
+    }
+    #canvas-editor a {
+      color: #313030;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    /* Draggable Image Wrappers */
+    .canvas-img-wrapper {
+      margin: 16px 0;
+      text-align: center;
+      position: relative;
+      cursor: grab;
+      user-select: none;
+      transition: opacity 0.2s ease;
+    }
+    .canvas-img-wrapper:active {
+      cursor: grabbing;
+    }
+    .canvas-img-wrapper.dragging {
+      opacity: 0.35;
+    }
+    .canvas-img-wrapper.drop-target-before {
+      border-top: 3px solid #0284c7 !important;
+    }
+    .canvas-img-wrapper.drop-target-after {
+      border-bottom: 3px solid #0284c7 !important;
+    }
+    #canvas-editor img {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+      margin: 0 auto;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: outline 0.15s ease, box-shadow 0.15s ease;
+    }
+    #canvas-editor img.selected-img {
+      outline: 3px solid #0284c7;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+    /* Modal backdrop */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(49, 48, 48, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      width: 100%;
+      max-width: 950px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+  </style>
+
+  <!-- Top Action Bar -->
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
     <div>
-      <a href="/admin" style="color: #64748b; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500;">
-        ← Quay lại trang quản trị
-      </a>
-      <h1 style="font-size: 1.85rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem; letter-spacing: -0.01em;">
-        Chỉnh sửa Hồ sơ năng lực (CV)
-      </h1>
-      <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.25rem;">
-        Cập nhật các mục Tài trợ (Grant), Hội thảo (Workshop), Học vấn (Education) và Lịch chiếu phim (Selected screening) hiển thị tại <code>/cv</code>.
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #313030; margin: 0;">
+        Canvas Trang Hồ sơ năng lực (CV)
+      </h2>
+      <p style="font-size: 0.85rem; color: #545454; margin: 0.2rem 0 0 0;">
+        Font <strong>Inter 16px</strong>, khoảng cách dòng <strong>1.4</strong>. Soạn thảo tự do các mục Grant, Workshop, Education, Screening, ảnh giải thưởng tùy thích.
       </p>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="/cv" target="_blank" class="btn btn-outline">
+
+    <!-- Action Buttons -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button type="button" id="btn-open-preview" class="btn btn-outline" style="border-color: #313030; color: #313030; font-weight: 600;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview toàn bộ web
+      </button>
+
+      <a href="/cv" target="_blank" class="btn btn-secondary" style="color: #313030;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        Xem trang CV ↗
+        Xem trang CV ngoài web ↗
       </a>
-      <button type="button" id="save-cv-btn" class="btn btn-primary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Lưu thay đổi
+
+      <button type="button" id="btn-save-cv" class="btn btn-primary" style="background: #313030; padding: 0.6rem 1.4rem; font-size: 0.95rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Lưu thay đổi (Save)
       </button>
     </div>
   </div>
 
   <!-- Notification Banner -->
-  <div id="cv-status-banner" style="display: none; padding: 1rem 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; font-weight: 500;"></div>
+  <div id="save-status-banner" style="display: none; padding: 1rem 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; font-weight: 500;"></div>
 
-  <!-- Editor & Live Preview Grid -->
-  <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 2rem; align-items: start;">
-    <!-- Left Column: Form Controls -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Grants Section -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
-            1. Tài trợ & Quỹ (Grant)
-          </h3>
-          <button type="button" id="add-grant-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
-            + Thêm dòng
+  <!-- MAIN CANVAS CONTAINER -->
+  <div class="card" style="padding: 1.5rem;">
+    <!-- Rich Canvas Editor Frame -->
+    <div style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
+      <!-- Toolbar -->
+      <div class="editor-toolbar">
+        <!-- Undo / Redo Group -->
+        <div class="tb-group">
+          <button type="button" id="tb-undo" class="tb-btn" title="Hoàn tác (Undo - Ctrl+Z / Cmd+Z)" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button type="button" id="tb-redo" class="tb-btn" title="Làm lại (Redo - Ctrl+Y / Cmd+Shift+Z)" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
           </button>
         </div>
-        <div id="grants-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <!-- Items will be populated by script -->
-        </div>
-      </div>
 
-      <!-- Workshops Section -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
-            2. Hội thảo & Khóa học (Workshop)
-          </h3>
-          <button type="button" id="add-workshop-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
-            + Thêm dòng
+        <!-- Format Blocks: Paragraph vs Headings -->
+        <div class="tb-group">
+          <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Kiểu:</label>
+          <select id="tb-formatblock" class="tb-select" title="Định dạng đoạn">
+            <option value="p" selected>Đoạn văn (p)</option>
+            <option value="h2">Tiêu đề mục (h2 - Grant, Workshop...)</option>
+            <option value="h3">Tiêu đề phụ (h3)</option>
+          </select>
+        </div>
+
+        <!-- Font Size: 16px selected by default -->
+        <div class="tb-group">
+          <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Cỡ chữ:</label>
+          <select id="tb-fontsize" class="tb-select" title="Cỡ chữ">
+            <option value="13px">13px</option>
+            <option value="14px">14px</option>
+            <option value="15px">15px</option>
+            <option value="16px" selected>16px (Chuẩn CV)</option>
+            <option value="18px">18px (Tiêu đề mục chuẩn)</option>
+            <option value="20px">20px</option>
+            <option value="24px">24px</option>
+          </select>
+        </div>
+
+        <!-- Color Picker: Primary #313030, Secondary #545454 -->
+        <div class="tb-group">
+          <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Màu:</label>
+          <input type="color" id="tb-color" value="#313030" style="width: 28px; height: 28px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Chọn màu chữ" />
+          <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #313030;" onclick="document.execCommand('foreColor', false, '#313030'); setTimeout(() => recordHistory(true), 50);" title="Màu chính #313030">Chính</button>
+          <button type="button" class="tb-btn" style="padding: 0 0.4rem; font-size: 0.75rem; color: #545454;" onclick="document.execCommand('foreColor', false, '#545454'); setTimeout(() => recordHistory(true), 50);" title="Màu xám phụ #545454">Phụ</button>
+        </div>
+
+        <!-- Text Style Format -->
+        <div class="tb-group">
+          <button type="button" class="tb-btn" onclick="document.execCommand('bold', false, ''); setTimeout(() => recordHistory(true), 50);" title="In đậm (Bold)"><b>B</b></button>
+          <button type="button" class="tb-btn" onclick="document.execCommand('italic', false, ''); setTimeout(() => recordHistory(true), 50);" title="In nghiêng (Italic)"><i>I</i></button>
+          <button type="button" class="tb-btn" onclick="document.execCommand('underline', false, ''); setTimeout(() => recordHistory(true), 50);" title="Gạch chân (Underline)"><u>U</u></button>
+          <button type="button" class="tb-btn" onclick="document.execCommand('strikeThrough', false, ''); setTimeout(() => recordHistory(true), 50);" title="Gạch ngang (Strikethrough)"><s>S</s></button>
+        </div>
+
+        <!-- Alignment -->
+        <div class="tb-group">
+          <button type="button" class="tb-btn" onclick="document.execCommand('justifyLeft', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn trái">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+          </button>
+          <button type="button" class="tb-btn" onclick="document.execCommand('justifyCenter', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn giữa">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+          </button>
+          <button type="button" class="tb-btn" onclick="document.execCommand('justifyRight', false, ''); setTimeout(() => recordHistory(true), 50);" title="Căn phải">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
           </button>
         </div>
-        <div id="workshops-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <!-- Items will be populated by script -->
-        </div>
-      </div>
 
-      <!-- Education Section -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
-            3. Học vấn (Education)
-          </h3>
-          <button type="button" id="add-education-btn" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">
-            + Thêm dòng
+        <!-- Line Height: 1.4 default -->
+        <div class="tb-group">
+          <label style="font-size: 0.78rem; font-weight: 600; color: #545454; margin-right: 0.25rem;">Giãn dòng:</label>
+          <select id="tb-lineheight" class="tb-select" title="Khoảng cách dòng trên dưới">
+            <option value="1.2">1.2 (Hẹp)</option>
+            <option value="1.4" selected>1.4 (Chuẩn)</option>
+            <option value="1.6">1.6</option>
+            <option value="1.8">1.8 (Rộng)</option>
+            <option value="2.0">2.0</option>
+          </select>
+        </div>
+
+        <!-- Insert Image Action Button -->
+        <div>
+          <button type="button" id="btn-insert-image" class="tb-btn" style="background: #313030; color: #ffffff; border-color: #313030; padding: 0.35rem 0.85rem; gap: 0.4rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Insert ảnh mới (Upload R2 / Crop)
           </button>
         </div>
-        <div id="education-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <!-- Items will be populated by script -->
-        </div>
       </div>
 
-      <!-- Selected Screenings Section -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">
-            4. Chiếu phim & Triển lãm (Selected screening)
-          </h3>
-        </div>
-        <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 0.75rem;">
-          Nhập mỗi sự kiện chiếu phim trên một dòng (Ví dụ: <code>Atelier Varan, Paris, 2026</code>).
-        </p>
-        <textarea 
-          id="screenings-text"
-          rows="6"
-          style="width: 100%; padding: 0.75rem 1rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; line-height: 1.6;"
-          placeholder="Atelier Varan, Paris, 2026&#10;Queer Museum, Hanoi, 2025"
-        >{cv.screenings ? cv.screenings.join('\n') : ''}</textarea>
-      </div>
+      <!-- Editable Content Area -->
+      <div id="canvas-editor" contenteditable="true" spellcheck="false" set:html={initialHTML} />
     </div>
 
-    <!-- Right Column: Live Preview -->
-    <div style="position: sticky; top: 80px;">
-      <div class="card" style="background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 2rem;">
-        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
-          <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8;">
-            👁 Xem trước trực tiếp (Live Preview)
-          </span>
-          <span style="font-size: 0.78rem; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
-            Chuẩn giao diện /cv
-          </span>
+    <!-- Floating Image Controls Tooltip -->
+    <div id="img-floating-toolbar" style="display: none; position: absolute; background: #313030; color: #fff; border-radius: 0.5rem; padding: 0.45rem 0.65rem; gap: 0.45rem; align-items: center; z-index: 100; box-shadow: 0 10px 20px -3px rgba(0,0,0,0.4); font-size: 0.82rem; border: 1px solid #545454;">
+      <span style="font-weight: 600; color: #cbd5e1; padding-right: 0.35rem; border-right: 1px solid #545454;">Size:</span>
+      <button type="button" class="btn-img-size tb-btn" data-size="25%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">25%</button>
+      <button type="button" class="btn-img-size tb-btn" data-size="50%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">50%</button>
+      <button type="button" class="btn-img-size tb-btn" data-size="75%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">75%</button>
+      <button type="button" class="btn-img-size tb-btn" data-size="100%" style="height: 26px; padding: 0 0.4rem; font-size: 0.75rem;">100%</button>
+      
+      <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
+      
+      <button type="button" id="btn-img-recrop" class="tb-btn" style="background: #545454; color: #ffffff; border-color: #545454; height: 26px; padding: 0 0.6rem; font-size: 0.75rem; gap: 0.25rem;" title="Mở bộ công cụ Crop để cắt lại ảnh này">
+        ✂️ Crop lại ảnh
+      </button>
+
+      <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
+
+      <span style="font-weight: 600; color: #cbd5e1; padding-right: 0.25rem;">Vị trí:</span>
+      <button type="button" id="btn-img-move-up" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển lên trên">
+        ⬆ Lên
+      </button>
+      <button type="button" id="btn-img-move-down" class="tb-btn" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;" title="Di chuyển xuống dưới">
+        ⬇ Xuống
+      </button>
+
+      <span style="height: 16px; width: 1px; background: #545454; margin: 0 0.2rem;"></span>
+
+      <button type="button" id="btn-img-delete" class="tb-btn btn-danger" style="height: 26px; padding: 0 0.5rem; font-size: 0.75rem;">
+        🗑️ Xóa ảnh
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: INSERT & CROP IMAGE                                              -->
+  <!-- ========================================================================= -->
+  <div id="image-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h3 id="modal-title-heading" style="font-size: 1.15rem; font-weight: 700; color: #313030; margin: 0;">
+            Chèn & Chỉnh sửa ảnh (Crop tùy thích)
+          </h3>
+          <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #545454; margin: 0.15rem 0 0 0;">
+            Chọn tỷ lệ có sẵn hoặc kéo 4 góc tự do để crop ảnh.
+          </p>
+        </div>
+        <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #545454; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem;">
+        <div id="modal-input-sources" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+              Cách 1: Tải ảnh từ máy tính (lên R2)
+            </label>
+            <input type="file" id="modal-file-input" accept="image/*" style="font-size: 0.85rem;" />
+            <div id="modal-upload-loading" style="display: none; font-size: 0.8rem; color: #0284c7; margin-top: 0.25rem; font-weight: 600;">
+              ⏳ Đang tải ảnh lên Cloudflare R2...
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #313030; margin-bottom: 0.4rem;">
+              Cách 2: Dán đường dẫn ảnh (R2 / Web)
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="modal-link-input" placeholder="https://storage.hiepcm.com/..." style="flex: 1; padding: 0.45rem 0.65rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+              <button type="button" id="btn-load-link" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #313030;">Tải ảnh</button>
+            </div>
+          </div>
         </div>
 
-        <!-- Render exactly as /cv -->
-        <div id="cv-preview" style="display: flex; flex-direction: column; gap: 32px; background: #ffffff;">
-          <!-- Will be filled by live JS -->
+        <div id="modal-recrop-notice" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; color: #313030; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
+          ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể chọn tỷ lệ phổ biến hoặc kéo 4 góc tự do.
         </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: #545454; margin-right: 0.2rem;">Tỷ lệ:</span>
+              <button type="button" class="btn-crop-ratio tb-btn active" data-ratio="free" title="Kéo 4 góc tự do">Tự do</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="original" title="Giữ nguyên tỷ lệ gốc">Ảnh gốc</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="16:9">16:9</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="4:3">4:3</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="1:1">1:1</button>
+            </div>
+
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" id="btn-crop-rotate" class="tb-btn" style="font-size: 0.8rem;">🔄 Xoay 90°</button>
+              <button type="button" id="btn-crop-reset" class="tb-btn" style="font-size: 0.8rem;">↺ Reset</button>
+            </div>
+          </div>
+
+          <div style="width: 100%; height: 380px; background: #313030; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
+            <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
+              Chưa có ảnh. Vui lòng chọn file tải lên hoặc dán link ảnh từ R2.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; background: #f8fafc;">
+        <button type="button" id="btn-modal-cancel" class="btn btn-outline" style="color: #545454; border-color: #cbd5e1;">Cancel</button>
+        <button type="button" id="btn-modal-save" class="btn btn-primary" style="background: #313030;" disabled>Save & Chèn vào Canvas</button>
       </div>
     </div>
   </div>
 
-  <!-- Raw initial data for JS -->
-  <div id="raw-cv-data" style="display: none;" data-cv={JSON.stringify(cv)}></div>
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: FULL WEBSITE PREVIEW (/cv)                                       -->
+  <!-- ========================================================================= -->
+  <div id="preview-modal" class="modal-overlay" style="padding: 0; background: #ffffff;">
+    <div style="width: 100%; height: 100vh; display: flex; flex-direction: column;">
+      <div style="height: 54px; background: #313030; color: #ffffff; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1px solid #545454;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 500;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e;"></span>
+          Xem trước trang CV thực tế (Font Inter 16px / Giãn dòng 1.4 / #313030)
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" id="btn-preview-close" class="btn btn-outline" style="color: #ffffff; border-color: #545454; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+            ✕ Đóng Preview
+          </button>
+          <button type="button" id="btn-preview-save-direct" class="btn btn-primary" style="background: #545454; padding: 0.35rem 1rem; font-size: 0.82rem;">
+            💾 Lưu ngay trang CV
+          </button>
+        </div>
+      </div>
 
-  <script>
-    const rawDataElem = document.getElementById('raw-cv-data') as HTMLDivElement;
-    const initialCV = JSON.parse(rawDataElem.getAttribute('data-cv') || '{}');
-
-    let state = {
-      grants: initialCV.grants || [],
-      workshops: initialCV.workshops || [],
-      education: initialCV.education || [],
-      screenings: initialCV.screenings || []
-    };
-
-    const grantsContainer = document.getElementById('grants-container') as HTMLDivElement;
-    const workshopsContainer = document.getElementById('workshops-container') as HTMLDivElement;
-    const educationContainer = document.getElementById('education-container') as HTMLDivElement;
-    const screeningsText = document.getElementById('screenings-text') as HTMLTextAreaElement;
-    const previewContainer = document.getElementById('cv-preview') as HTMLDivElement;
-    const saveBtn = document.getElementById('save-cv-btn') as HTMLButtonElement;
-    const statusBanner = document.getElementById('cv-status-banner') as HTMLDivElement;
-
-    function renderGrantsInputs() {
-      grantsContainer.innerHTML = '';
-      state.grants.forEach((grant: any, idx: number) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display: grid; grid-template-columns: 1fr 2fr 36px; gap: 0.5rem; align-items: center;';
-        row.innerHTML = `
-          <input type="text" placeholder="Tiêu đề (Grant)" value="${grant.title || ''}" class="grant-title" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <input type="text" placeholder="Chi tiết (Tổ chức, năm...)" value="${grant.details || ''}" class="grant-details" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <button type="button" class="del-grant btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
-        `;
-        grantsContainer.appendChild(row);
-      });
-
-      // Events
-      grantsContainer.querySelectorAll('.grant-title').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.grants[e.target.dataset.idx].title = e.target.value;
-          updateLivePreview();
-        });
-      });
-      grantsContainer.querySelectorAll('.grant-details').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.grants[e.target.dataset.idx].details = e.target.value;
-          updateLivePreview();
-        });
-      });
-      grantsContainer.querySelectorAll('.del-grant').forEach(btn => {
-        btn.addEventListener('click', (e: any) => {
-          state.grants.splice(e.target.dataset.idx, 1);
-          renderGrantsInputs();
-          updateLivePreview();
-        });
-      });
-    }
-
-    function renderWorkshopsInputs() {
-      workshopsContainer.innerHTML = '';
-      state.workshops.forEach((ws: any, idx: number) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display: grid; grid-template-columns: 1.5fr 1.5fr 36px; gap: 0.5rem; align-items: center;';
-        row.innerHTML = `
-          <input type="text" placeholder="Tên Workshop" value="${ws.title || ''}" class="ws-title" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <input type="text" placeholder="Tổ chức / Năm" value="${ws.details || ''}" class="ws-details" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <button type="button" class="del-ws btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
-        `;
-        workshopsContainer.appendChild(row);
-      });
-
-      workshopsContainer.querySelectorAll('.ws-title').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.workshops[e.target.dataset.idx].title = e.target.value;
-          updateLivePreview();
-        });
-      });
-      workshopsContainer.querySelectorAll('.ws-details').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.workshops[e.target.dataset.idx].details = e.target.value;
-          updateLivePreview();
-        });
-      });
-      workshopsContainer.querySelectorAll('.del-ws').forEach(btn => {
-        btn.addEventListener('click', (e: any) => {
-          state.workshops.splice(e.target.dataset.idx, 1);
-          renderWorkshopsInputs();
-          updateLivePreview();
-        });
-      });
-    }
-
-    function renderEducationInputs() {
-      educationContainer.innerHTML = '';
-      state.education.forEach((edu: any, idx: number) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display: grid; grid-template-columns: 1.5fr 1.5fr 36px; gap: 0.5rem; align-items: center;';
-        row.innerHTML = `
-          <input type="text" placeholder="Bằng cấp (Degree)" value="${edu.degree || ''}" class="edu-degree" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <input type="text" placeholder="Trường / Cơ sở đào tạo" value="${edu.institution || ''}" class="edu-inst" data-idx="${idx}" style="padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.88rem;" />
-          <button type="button" class="del-edu btn-danger" data-idx="${idx}" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; cursor: pointer; border: none;" title="Xóa">✕</button>
-        `;
-        educationContainer.appendChild(row);
-      });
-
-      educationContainer.querySelectorAll('.edu-degree').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.education[e.target.dataset.idx].degree = e.target.value;
-          updateLivePreview();
-        });
-      });
-      educationContainer.querySelectorAll('.edu-inst').forEach(input => {
-        input.addEventListener('input', (e: any) => {
-          state.education[e.target.dataset.idx].institution = e.target.value;
-          updateLivePreview();
-        });
-      });
-      educationContainer.querySelectorAll('.del-edu').forEach(btn => {
-        btn.addEventListener('click', (e: any) => {
-          state.education.splice(e.target.dataset.idx, 1);
-          renderEducationInputs();
-          updateLivePreview();
-        });
-      });
-    }
-
-    function updateLivePreview() {
-      // Screenings from textarea
-      const screenings = screeningsText.value
-        .split('\n')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-      state.screenings = screenings;
-
-      let html = '';
-
-      // Grant
-      if (state.grants && state.grants.length > 0) {
-        html += `
-          <section style="display: flex; flex-direction: column; gap: 8px;">
-            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Grant</h2>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${state.grants.map((g: any) => `
-                <div style="font-size: 0.92rem; color: #000000; opacity: 0.7; line-height: 1.6;">
-                  ${g.details ? `${g.title && g.title !== 'Grant' ? `<span style="font-weight: 500; opacity: 1; color: #000;">${g.title}: </span>` : ''}${g.details}` : g.title}
-                </div>
-              `).join('')}
+      <div style="flex: 1; overflow-y: auto; display: flex; background: #ffffff;">
+        <aside style="width: 280px; flex-shrink: 0; padding: 75px 40px 75px 70px; border-right: none; background: #ffffff;">
+          <nav style="display: flex; flex-direction: column;">
+            <div style="font-size: 1rem; font-weight: 600; color: #313030; letter-spacing: -0.01em; margin-bottom: 0.65rem;">Films</div>
+            <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 2rem;">
+              <span style="font-size: 1rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">About</span>
+              <span style="font-size: 1rem; font-weight: 400; color: #545454; letter-spacing: -0.01em;">CV</span>
             </div>
-          </section>
-        `;
-      }
+          </nav>
+        </aside>
 
-      // Workshop
-      if (state.workshops && state.workshops.length > 0) {
-        html += `
-          <section style="display: flex; flex-direction: column; gap: 14px;">
-            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Workshop</h2>
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.92rem; line-height: 1.6;">
-              ${state.workshops.map((ws: any) => `
-                <div>
-                  <div style="color: #000000; font-weight: 500;">${ws.title}</div>
-                  ${ws.details ? `<div style="color: #000000; opacity: 0.7;">${ws.details}</div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          </section>
-        `;
-      }
+        <main style="flex: 1; min-width: 0; padding: 75px 60px 100px 30px; background: #ffffff;">
+          <div id="preview-cv-render" style="max-width: 800px; font-family: 'Inter', system-ui, sans-serif; font-size: 16px; line-height: 1.4; color: #313030;">
+            <!-- Rendered CV canvas -->
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
 
-      // Education
-      if (state.education && state.education.length > 0) {
-        html += `
-          <section style="display: flex; flex-direction: column; gap: 8px;">
-            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Education</h2>
-            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; line-height: 1.6;">
-              ${state.education.map((edu: any) => `
-                <div>
-                  <div style="color: #000000; font-weight: 500;">${edu.degree}</div>
-                  ${edu.institution ? `<div style="color: #000000; opacity: 0.7;">${edu.institution}</div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          </section>
-        `;
-      }
+  <script is:inline>
+    const canvasEditor = document.getElementById('canvas-editor');
+    const saveCVBtn = document.getElementById('btn-save-cv');
+    const saveStatusBanner = document.getElementById('save-status-banner');
 
-      // Screenings
-      if (screenings.length > 0) {
-        html += `
-          <section style="display: flex; flex-direction: column; gap: 10px;">
-            <h2 style="font-size: 1rem; font-weight: 600; color: #000000; letter-spacing: -0.01em; margin: 0;">Selected screening</h2>
-            <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; color: #000000; opacity: 0.7; line-height: 1.6; margin: 0;">
-              ${screenings.map(sc => `<li>${sc}</li>`).join('')}
-            </ul>
-          </section>
-        `;
-      }
+    // Toolbar Elements
+    const tbUndo = document.getElementById('tb-undo');
+    const tbRedo = document.getElementById('tb-redo');
+    const tbFormatBlock = document.getElementById('tb-formatblock');
+    const tbFontSize = document.getElementById('tb-fontsize');
+    const tbColor = document.getElementById('tb-color');
+    const tbLineHeight = document.getElementById('tb-lineheight');
+    const btnInsertImage = document.getElementById('btn-insert-image');
 
-      previewContainer.innerHTML = html;
+    // Image Modal Elements
+    const imgModal = document.getElementById('image-modal');
+    const modalHeading = document.getElementById('modal-title-heading');
+    const modalSubHeading = document.getElementById('modal-subtitle-heading');
+    const modalInputSources = document.getElementById('modal-input-sources');
+    const modalRecropNotice = document.getElementById('modal-recrop-notice');
+    const modalCloseBtn = document.getElementById('btn-modal-close');
+    const modalCancelBtn = document.getElementById('btn-modal-cancel');
+    const modalSaveBtn = document.getElementById('btn-modal-save');
+    const modalFileInput = document.getElementById('modal-file-input');
+    const modalLinkInput = document.getElementById('modal-link-input');
+    const btnLoadLink = document.getElementById('btn-load-link');
+    const cropperTargetImg = document.getElementById('cropper-target-img');
+    const cropperPlaceholder = document.getElementById('cropper-empty-placeholder');
+    const modalUploadLoading = document.getElementById('modal-upload-loading');
+    const btnCropRotate = document.getElementById('btn-crop-rotate');
+    const btnCropReset = document.getElementById('btn-crop-reset');
+
+    // Floating Image Toolbar Elements
+    const imgFloatingToolbar = document.getElementById('img-floating-toolbar');
+    const btnImgRecrop = document.getElementById('btn-img-recrop');
+    const btnImgMoveUp = document.getElementById('btn-img-move-up');
+    const btnImgMoveDown = document.getElementById('btn-img-move-down');
+    const btnImgDelete = document.getElementById('btn-img-delete');
+    let selectedImageElement = null;
+
+    // Full Preview Elements
+    const previewModal = document.getElementById('preview-modal');
+    const btnOpenPreview = document.getElementById('btn-open-preview');
+    const btnPreviewClose = document.getElementById('btn-preview-close');
+    const btnPreviewSaveDirect = document.getElementById('btn-preview-save-direct');
+    const previewCVRender = document.getElementById('preview-cv-render');
+
+    let cropper = null;
+    let savedSelectionRange = null;
+    let isReCropping = false;
+    let activeReCropImg = null;
+    let draggedWrapper = null;
+    let currentSelectedRatio = 'free';
+
+    // Undo / Redo
+    let historyStack = [canvasEditor.innerHTML];
+    let historyIndex = 0;
+    const MAX_HISTORY = 60;
+    let debounceTimer = null;
+
+    function updateUndoRedoButtons() {
+      tbUndo.disabled = historyIndex <= 0;
+      tbRedo.disabled = historyIndex >= historyStack.length - 1;
     }
 
-    // Add row buttons
-    document.getElementById('add-grant-btn')?.addEventListener('click', () => {
-      state.grants.push({ title: 'Grant', details: '' });
-      renderGrantsInputs();
-      updateLivePreview();
+    function recordHistory(force = false) {
+      const currentHTML = canvasEditor.innerHTML;
+      if (!force && historyStack.length > 0 && historyStack[historyIndex] === currentHTML) return;
+
+      if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+      }
+      historyStack.push(currentHTML);
+      if (historyStack.length > MAX_HISTORY) historyStack.shift();
+      else historyIndex++;
+
+      updateUndoRedoButtons();
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        canvasEditor.innerHTML = historyStack[historyIndex];
+        ensureDraggableImages();
+        imgFloatingToolbar.style.display = 'none';
+        updateUndoRedoButtons();
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        canvasEditor.innerHTML = historyStack[historyIndex];
+        ensureDraggableImages();
+        imgFloatingToolbar.style.display = 'none';
+        updateUndoRedoButtons();
+      }
+    }
+
+    tbUndo.addEventListener('click', undo);
+    tbRedo.addEventListener('click', redo);
+
+    canvasEditor.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => recordHistory(), 400);
     });
 
-    document.getElementById('add-workshop-btn')?.addEventListener('click', () => {
-      state.workshops.push({ title: '', details: '' });
-      renderWorkshopsInputs();
-      updateLivePreview();
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === canvasEditor || canvasEditor.contains(document.activeElement) || selectedImageElement) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+          if (e.shiftKey) { e.preventDefault(); redo(); }
+          else { e.preventDefault(); undo(); }
+        } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+          e.preventDefault(); redo();
+        }
+      }
     });
 
-    document.getElementById('add-education-btn')?.addEventListener('click', () => {
-      state.education.push({ degree: '', institution: '' });
-      renderEducationInputs();
-      updateLivePreview();
+    // Formatting Toolbar Handlers
+    tbFormatBlock.addEventListener('change', (e) => {
+      document.execCommand('formatBlock', false, e.target.value);
+      recordHistory(true);
     });
 
-    screeningsText.addEventListener('input', updateLivePreview);
+    tbFontSize.addEventListener('change', (e) => {
+      const size = e.target.value;
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      const span = document.createElement('span');
+      span.style.fontSize = size;
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      recordHistory(true);
+    });
 
-    // Initial render
-    renderGrantsInputs();
-    renderWorkshopsInputs();
-    renderEducationInputs();
-    updateLivePreview();
+    tbColor.addEventListener('input', (e) => {
+      document.execCommand('foreColor', false, e.target.value);
+      recordHistory(true);
+    });
+
+    tbLineHeight.addEventListener('change', (e) => {
+      const lh = e.target.value;
+      canvasEditor.style.lineHeight = lh;
+      const selection = window.getSelection();
+      if (selection.anchorNode) {
+        let parent = selection.anchorNode.parentElement;
+        while (parent && parent !== canvasEditor) {
+          if (parent.tagName === 'P' || parent.tagName === 'DIV' || parent.tagName === 'H2' || parent.tagName === 'H3') {
+            parent.style.lineHeight = lh;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+      }
+      recordHistory(true);
+    });
+
+    // Image Modal & Cropper
+    btnInsertImage.addEventListener('click', () => {
+      isReCropping = false;
+      activeReCropImg = null;
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) savedSelectionRange = sel.getRangeAt(0).cloneRange();
+      openImageModal(false);
+    });
+
+    function openImageModal(forReCrop = false) {
+      imgModal.style.display = 'flex';
+      modalSaveBtn.disabled = true;
+      cropperTargetImg.style.display = 'none';
+      cropperPlaceholder.style.display = 'block';
+
+      currentSelectedRatio = 'free';
+      document.querySelectorAll('.btn-crop-ratio').forEach(b => {
+        if (b.getAttribute('data-ratio') === 'free') b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
+      if (forReCrop) {
+        modalHeading.innerText = '✂️ Crop lại ảnh đã chọn trong Canvas';
+        modalSubHeading.innerText = 'Chọn tỷ lệ hoặc kéo 4 góc tự do để cắt ảnh.';
+        modalInputSources.style.display = 'none';
+        modalRecropNotice.style.display = 'block';
+        modalSaveBtn.innerText = 'Save & Cập nhật ảnh';
+      } else {
+        modalHeading.innerText = 'Chèn & Chỉnh sửa ảnh (Crop tùy thích)';
+        modalSubHeading.innerText = 'Tải ảnh lên Cloudflare R2 hoặc dán link R2.';
+        modalInputSources.style.display = 'grid';
+        modalRecropNotice.style.display = 'none';
+        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+        modalFileInput.value = '';
+        modalLinkInput.value = '';
+      }
+
+      if (cropper) { cropper.destroy(); cropper = null; }
+    }
+
+    function closeImageModal() {
+      imgModal.style.display = 'none';
+      if (cropper) { cropper.destroy(); cropper = null; }
+      isReCropping = false;
+      activeReCropImg = null;
+    }
+
+    modalCloseBtn.addEventListener('click', closeImageModal);
+    modalCancelBtn.addEventListener('click', closeImageModal);
+
+    function applyCropperRatio(ratioKey) {
+      if (!cropper) return;
+      currentSelectedRatio = ratioKey;
+      if (ratioKey === 'free') cropper.setAspectRatio(NaN);
+      else if (ratioKey === 'original') {
+        const d = cropper.getImageData();
+        if (d && d.naturalWidth) cropper.setAspectRatio(d.naturalWidth / d.naturalHeight);
+      } else if (ratioKey === '16:9') cropper.setAspectRatio(16 / 9);
+      else if (ratioKey === '4:3') cropper.setAspectRatio(4 / 3);
+      else if (ratioKey === '1:1') cropper.setAspectRatio(1);
+    }
+
+    document.querySelectorAll('.btn-crop-ratio').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-crop-ratio').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyCropperRatio(btn.getAttribute('data-ratio'));
+      });
+    });
+
+    function setupCropper(srcUrl) {
+      if (cropper) { cropper.destroy(); cropper = null; }
+      cropperPlaceholder.style.display = 'none';
+      cropperTargetImg.src = srcUrl;
+      cropperTargetImg.style.display = 'block';
+
+      cropper = new Cropper(cropperTargetImg, {
+        aspectRatio: NaN,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true,
+        background: false,
+        ready() {
+          modalSaveBtn.disabled = false;
+          if (currentSelectedRatio !== 'free') applyCropperRatio(currentSelectedRatio);
+        }
+      });
+    }
+
+    modalFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      modalUploadLoading.style.display = 'block';
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => setupCropper(loadEvt.target.result);
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success && data.url) modalLinkInput.value = data.url;
+      } catch (err) {
+        console.warn('R2 upload error:', err);
+      } finally {
+        modalUploadLoading.style.display = 'none';
+      }
+    });
+
+    btnLoadLink.addEventListener('click', () => {
+      const url = modalLinkInput.value.trim();
+      if (!url) return alert('Vui lòng dán link ảnh từ R2 hoặc Web.');
+      setupCropper(url);
+    });
+
+    btnCropRotate.addEventListener('click', () => { if (cropper) cropper.rotate(90); });
+    btnCropReset.addEventListener('click', () => { if (cropper) cropper.reset(); });
+
+    modalSaveBtn.addEventListener('click', async () => {
+      if (!cropper) return;
+      modalSaveBtn.disabled = true;
+      modalSaveBtn.innerText = 'Đang xử lý ảnh...';
+
+      const croppedCanvas = cropper.getCroppedCanvas();
+      croppedCanvas.toBlob(async (blob) => {
+        let finalImageUrl = '';
+        if (blob) {
+          const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
+          const formData = new FormData();
+          formData.append('file', croppedFile);
+          try {
+            const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+            const uploadData = await uploadRes.json();
+            if (uploadData.success && uploadData.url) finalImageUrl = uploadData.url;
+          } catch (e) {
+            console.warn('R2 save error:', e);
+          }
+        }
+
+        if (!finalImageUrl) finalImageUrl = croppedCanvas.toDataURL('image/png');
+
+        if (isReCropping && activeReCropImg) {
+          activeReCropImg.src = finalImageUrl;
+          positionFloatingToolbar(activeReCropImg);
+          recordHistory(true);
+        } else {
+          canvasEditor.focus();
+          if (savedSelectionRange) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedSelectionRange);
+          }
+
+          const imgWrapper = document.createElement('div');
+          imgWrapper.className = 'canvas-img-wrapper';
+          imgWrapper.setAttribute('draggable', 'true');
+          imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+          const img = document.createElement('img');
+          img.src = finalImageUrl;
+          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
+          imgWrapper.appendChild(img);
+
+          const pAfter = document.createElement('p');
+          pAfter.style.cssText = 'font-size: 16px; line-height: 1.4; color: #313030;';
+          pAfter.innerHTML = '<br/>';
+
+          if (savedSelectionRange) {
+            savedSelectionRange.insertNode(pAfter);
+            savedSelectionRange.insertNode(imgWrapper);
+          } else {
+            canvasEditor.appendChild(imgWrapper);
+            canvasEditor.appendChild(pAfter);
+          }
+
+          attachDragEventsToWrapper(imgWrapper);
+          recordHistory(true);
+        }
+
+        closeImageModal();
+        modalSaveBtn.disabled = false;
+        modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+      }, 'image/png');
+    });
+
+    // Floating Image Toolbar
+    function positionFloatingToolbar(img) {
+      const rect = img.getBoundingClientRect();
+      imgFloatingToolbar.style.display = 'flex';
+      imgFloatingToolbar.style.top = `${window.scrollY + rect.top - 46}px`;
+      imgFloatingToolbar.style.left = `${Math.max(10, window.scrollX + rect.left)}px`;
+    }
+
+    canvasEditor.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target.tagName === 'IMG') {
+        if (selectedImageElement) selectedImageElement.classList.remove('selected-img');
+        selectedImageElement = target;
+        selectedImageElement.classList.add('selected-img');
+        positionFloatingToolbar(target);
+      } else if (!e.target.closest('#img-floating-toolbar')) {
+        if (selectedImageElement) {
+          selectedImageElement.classList.remove('selected-img');
+          selectedImageElement = null;
+        }
+        imgFloatingToolbar.style.display = 'none';
+      }
+    });
+
+    document.querySelectorAll('.btn-img-size').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (selectedImageElement) {
+          selectedImageElement.style.width = btn.getAttribute('data-size');
+          selectedImageElement.style.maxWidth = '100%';
+          positionFloatingToolbar(selectedImageElement);
+          recordHistory(true);
+        }
+      });
+    });
+
+    btnImgRecrop.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      isReCropping = true;
+      activeReCropImg = selectedImageElement;
+      openImageModal(true);
+      setupCropper(selectedImageElement.src);
+    });
+
+    btnImgMoveUp.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
+      if (!wrapper || wrapper === canvasEditor) return;
+      const prev = wrapper.previousElementSibling;
+      if (prev) {
+        wrapper.parentElement.insertBefore(wrapper, prev);
+        positionFloatingToolbar(selectedImageElement);
+        recordHistory(true);
+      }
+    });
+
+    btnImgMoveDown.addEventListener('click', () => {
+      if (!selectedImageElement) return;
+      const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
+      if (!wrapper || wrapper === canvasEditor) return;
+      const next = wrapper.nextElementSibling;
+      if (next) {
+        wrapper.parentElement.insertBefore(wrapper, next.nextElementSibling);
+        positionFloatingToolbar(selectedImageElement);
+        recordHistory(true);
+      }
+    });
+
+    btnImgDelete.addEventListener('click', () => {
+      if (selectedImageElement) {
+        const wrapper = selectedImageElement.closest('.canvas-img-wrapper') || selectedImageElement.parentElement;
+        selectedImageElement.remove();
+        if (wrapper && wrapper.children.length === 0) wrapper.remove();
+        selectedImageElement = null;
+        imgFloatingToolbar.style.display = 'none';
+        recordHistory(true);
+      }
+    });
+
+    // Drag-and-drop Image Wrappers
+    function attachDragEventsToWrapper(wrapper) {
+      wrapper.setAttribute('draggable', 'true');
+      wrapper.addEventListener('dragstart', (e) => {
+        draggedWrapper = wrapper;
+        wrapper.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+      });
+      wrapper.addEventListener('dragend', () => {
+        wrapper.classList.remove('dragging');
+        draggedWrapper = null;
+        document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+          el.classList.remove('drop-target-before', 'drop-target-after');
+        });
+      });
+    }
+
+    canvasEditor.addEventListener('dragover', (e) => {
+      if (!draggedWrapper) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.target.closest('#canvas-editor > *');
+      if (target && target !== draggedWrapper) {
+        const rect = target.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+          el.classList.remove('drop-target-before', 'drop-target-after');
+        });
+        if (e.clientY < midY) target.classList.add('drop-target-before');
+        else target.classList.add('drop-target-after');
+      }
+    });
+
+    canvasEditor.addEventListener('dragleave', (e) => {
+      const target = e.target.closest('#canvas-editor > *');
+      if (target) target.classList.remove('drop-target-before', 'drop-target-after');
+    });
+
+    canvasEditor.addEventListener('drop', (e) => {
+      if (!draggedWrapper) return;
+      e.preventDefault();
+      const target = e.target.closest('#canvas-editor > *');
+      if (target && target !== draggedWrapper) {
+        const rect = target.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) canvasEditor.insertBefore(draggedWrapper, target);
+        else canvasEditor.insertBefore(draggedWrapper, target.nextElementSibling);
+        recordHistory(true);
+      }
+      document.querySelectorAll('.drop-target-before, .drop-target-after').forEach(el => {
+        el.classList.remove('drop-target-before', 'drop-target-after');
+      });
+      if (selectedImageElement) positionFloatingToolbar(selectedImageElement);
+    });
+
+    function ensureDraggableImages() {
+      const allImgs = canvasEditor.querySelectorAll('img');
+      allImgs.forEach(img => {
+        let wrapper = img.closest('.canvas-img-wrapper');
+        if (!wrapper) {
+          wrapper = document.createElement('div');
+          wrapper.className = 'canvas-img-wrapper';
+          wrapper.setAttribute('draggable', 'true');
+          wrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+          img.parentNode.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
+        }
+        attachDragEventsToWrapper(wrapper);
+      });
+    }
+
+    ensureDraggableImages();
+
+    // Full Preview Modal
+    btnOpenPreview.addEventListener('click', () => {
+      previewCVRender.innerHTML = canvasEditor.innerHTML;
+      previewModal.style.display = 'block';
+    });
+
+    btnPreviewClose.addEventListener('click', () => {
+      previewModal.style.display = 'none';
+    });
+
+    btnPreviewSaveDirect.addEventListener('click', () => {
+      saveCVAction();
+      previewModal.style.display = 'none';
+    });
 
     // Save Action
-    saveBtn.addEventListener('click', async () => {
-      saveBtn.disabled = true;
-      saveBtn.innerText = 'Đang lưu...';
-      statusBanner.style.display = 'none';
+    async function saveCVAction() {
+      if (selectedImageElement) selectedImageElement.classList.remove('selected-img');
+      imgFloatingToolbar.style.display = 'none';
+
+      saveCVBtn.disabled = true;
+      saveCVBtn.innerText = 'Đang lưu vào CMS...';
+      saveStatusBanner.style.display = 'none';
 
       const payload = {
-        grants: state.grants.filter((g: any) => g.title || g.details),
-        workshops: state.workshops.filter((w: any) => w.title || w.details),
-        education: state.education.filter((e: any) => e.degree || e.institution),
-        screenings: screeningsText.value
-          .split('\n')
-          .map(s => s.trim())
-          .filter(s => s.length > 0)
+        content_html: canvasEditor.innerHTML
       };
 
       try {
@@ -377,31 +1006,38 @@ const cv = await getCVData(db);
 
         const data = await res.json();
         if (res.ok && data.success) {
-          statusBanner.style.display = 'block';
-          statusBanner.style.background = '#dcfce7';
-          statusBanner.style.color = '#166534';
-          statusBanner.style.border = '1px solid #bbf7d0';
-          statusBanner.innerText = '✓ Đã lưu thành công! Dữ liệu hồ sơ CV đã được cập nhật.';
+          saveStatusBanner.style.display = 'block';
+          saveStatusBanner.style.background = '#dcfce7';
+          saveStatusBanner.style.color = '#166534';
+          saveStatusBanner.style.border = '1px solid #bbf7d0';
+          saveStatusBanner.innerHTML = `
+            ✓ Đã lưu thành công vào CMS! Trang Hồ sơ năng lực (CV) đã được cập nhật trực tiếp ra website.
+            <a href="/cv" target="_blank" style="margin-left: 1rem; color: #0284c7; font-weight: 700; text-decoration: underline;">
+              Xem trang CV ngay ↗
+            </a>
+          `;
         } else {
-          statusBanner.style.display = 'block';
-          statusBanner.style.background = '#fee2e2';
-          statusBanner.style.color = '#991b1b';
-          statusBanner.style.border = '1px solid #ef4444';
-          statusBanner.innerText = data.error || 'Có lỗi xảy ra khi lưu.';
+          saveStatusBanner.style.display = 'block';
+          saveStatusBanner.style.background = '#fee2e2';
+          saveStatusBanner.style.color = '#991b1b';
+          saveStatusBanner.style.border = '1px solid #ef4444';
+          saveStatusBanner.innerText = data.error || 'Có lỗi xảy ra khi lưu.';
         }
       } catch (err) {
-        statusBanner.style.display = 'block';
-        statusBanner.style.background = '#fee2e2';
-        statusBanner.style.color = '#991b1b';
-        statusBanner.style.border = '1px solid #ef4444';
-        statusBanner.innerText = 'Lỗi kết nối máy chủ.';
+        saveStatusBanner.style.display = 'block';
+        saveStatusBanner.style.background = '#fee2e2';
+        saveStatusBanner.style.color = '#991b1b';
+        saveStatusBanner.style.border = '1px solid #ef4444';
+        saveStatusBanner.innerText = 'Lỗi kết nối máy chủ.';
       } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = `
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Lưu thay đổi
+        saveCVBtn.disabled = false;
+        saveCVBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Lưu thay đổi (Save)
         `;
       }
-    });
+    }
+
+    saveCVBtn.addEventListener('click', saveCVAction);
   </script>
 </AdminLayout>

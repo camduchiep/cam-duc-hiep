@@ -9,76 +9,130 @@ const cv = await getCVData(db);
 ---
 
 <Layout title="CV" activeNav="cv">
-  <div style="max-width: 800px; display: flex; flex-direction: column; gap: 40px; background: #ffffff;">
-    <!-- Grant -->
-    {cv.grants && cv.grants.length > 0 && (
-      <section style="display: flex; flex-direction: column; gap: 8px;">
-        <h2 style="font-size: 1.05rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
-          Grant
-        </h2>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          {cv.grants.map((grant) => (
-            <div style="font-size: 0.95rem; color: #545454; line-height: 1.6;">
-              {grant.details ? (
-                <>
-                  {grant.title && grant.title !== 'Grant' && <span style="font-weight: 500; color: #313030;">{grant.title}: </span>}
-                  {grant.details}
-                </>
-              ) : (
-                grant.title
-              )}
+  <div style="max-width: 800px; display: flex; flex-direction: column; background: #ffffff;">
+    {cv.content_html ? (
+      <div class="cv-canvas-content" set:html={cv.content_html} />
+    ) : (
+      <div style="display: flex; flex-direction: column; gap: 40px;">
+        <!-- Grant -->
+        {cv.grants && cv.grants.length > 0 && (
+          <section style="display: flex; flex-direction: column; gap: 8px;">
+            <h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
+              Grant
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              {cv.grants.map((grant) => (
+                <div style="font-size: 16px; color: #545454; line-height: 1.4;">
+                  {grant.details ? (
+                    <>
+                      {grant.title && grant.title !== 'Grant' && <span style="font-weight: 500; color: #313030;">{grant.title}: </span>}
+                      {grant.details}
+                    </>
+                  ) : (
+                    grant.title
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-    )}
+          </section>
+        )}
 
-    <!-- Workshop -->
-    {cv.workshops && cv.workshops.length > 0 && (
-      <section style="display: flex; flex-direction: column; gap: 16px;">
-        <h2 style="font-size: 1.05rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
-          Workshop
-        </h2>
-        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.95rem; line-height: 1.6;">
-          {cv.workshops.map((ws) => (
-            <div>
-              <div style="color: #313030; font-weight: 500;">{ws.title}</div>
-              {ws.details && <div style="color: #545454;">{ws.details}</div>}
+        <!-- Workshop -->
+        {cv.workshops && cv.workshops.length > 0 && (
+          <section style="display: flex; flex-direction: column; gap: 16px;">
+            <h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
+              Workshop
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 16px; line-height: 1.4;">
+              {cv.workshops.map((ws) => (
+                <div>
+                  <div style="color: #313030; font-weight: 500;">{ws.title}</div>
+                  {ws.details && <div style="color: #545454;">{ws.details}</div>}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-    )}
+          </section>
+        )}
 
-    <!-- Education -->
-    {cv.education && cv.education.length > 0 && (
-      <section style="display: flex; flex-direction: column; gap: 8px;">
-        <h2 style="font-size: 1.05rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
-          Education
-        </h2>
-        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; line-height: 1.6;">
-          {cv.education.map((edu) => (
-            <div>
-              <div style="color: #313030; font-weight: 500;">{edu.degree}</div>
-              {edu.institution && <div style="color: #545454;">{edu.institution}</div>}
+        <!-- Education -->
+        {cv.education && cv.education.length > 0 && (
+          <section style="display: flex; flex-direction: column; gap: 8px;">
+            <h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
+              Education
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.4;">
+              {cv.education.map((edu) => (
+                <div>
+                  <div style="color: #313030; font-weight: 500;">{edu.degree}</div>
+                  {edu.institution && <div style="color: #545454;">{edu.institution}</div>}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-    )}
+          </section>
+        )}
 
-    <!-- Selected screening -->
-    {cv.screenings && cv.screenings.length > 0 && (
-      <section style="display: flex; flex-direction: column; gap: 12px;">
-        <h2 style="font-size: 1.05rem; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
-          Selected screening
-        </h2>
-        <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; color: #545454; line-height: 1.6;">
-          {cv.screenings.map((sc) => (
-            <li>{sc}</li>
-          ))}
-        </ul>
-      </section>
+        <!-- Selected screening -->
+        {cv.screenings && cv.screenings.length > 0 && (
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="font-size: 18px; font-weight: 600; color: #313030; letter-spacing: -0.01em;">
+              Selected screening
+            </h2>
+            <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px; font-size: 16px; color: #545454; line-height: 1.4;">
+              {cv.screenings.map((sc) => (
+                <li>{sc}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
     )}
   </div>
 </Layout>
+
+<style is:global>
+  .cv-canvas-content {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.4;
+    color: #313030;
+  }
+  .cv-canvas-content h2, 
+  .cv-canvas-content h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #313030;
+    margin-top: 28px;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .cv-canvas-content h2:first-child,
+  .cv-canvas-content h3:first-child {
+    margin-top: 0;
+  }
+  .cv-canvas-content p {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #313030;
+    margin-bottom: 0.75rem;
+  }
+  .cv-canvas-content a {
+    color: #313030;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+  }
+  .cv-canvas-content a:hover {
+    color: #545454;
+  }
+  .cv-canvas-content ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1.5rem;
+  }
+  .cv-canvas-content li {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #545454;
+    margin-bottom: 0.5rem;
+  }
+</style>

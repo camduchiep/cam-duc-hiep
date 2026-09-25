@@ -2,10 +2,11 @@ import defaultAbout from '../data/about.json';
 import defaultCV from '../data/cv.json';
 
 export interface AboutData {
-  bioParagraphs: string[];
-  location: string;
-  email: string;
-  phone: string;
+  content_html?: string;
+  bioParagraphs?: string[];
+  location?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface CVItem {
@@ -19,10 +20,11 @@ export interface CVEducation {
 }
 
 export interface CVData {
-  grants: CVItem[];
-  workshops: CVItem[];
-  education: CVEducation[];
-  screenings: string[];
+  content_html?: string;
+  grants?: CVItem[];
+  workshops?: CVItem[];
+  education?: CVEducation[];
+  screenings?: string[];
 }
 
 export async function getAboutData(db?: any): Promise<AboutData> {

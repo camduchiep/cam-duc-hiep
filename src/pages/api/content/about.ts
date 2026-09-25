@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body: AboutData = await request.json();
 
-    if (!body || !Array.isArray(body.bioParagraphs)) {
+    if (!body || (!body.content_html && !Array.isArray(body.bioParagraphs))) {
       return new Response(JSON.stringify({ error: 'Dữ liệu không hợp lệ.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -30,6 +30,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (db) {
       try {
         await db.prepare(`
+          CREATE TABLE IF NOT EXISTS pages (
+            slug TEXT PRIMARY KEY,
+            title TEXT,
+            data TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+        `).run();
+
+        await db.prepare(`
           INSERT INTO pages (slug, title, data, updated_at)
           VALUES ('about', 'About', ?, CURRENT_TIMESTAMP)
           ON CONFLICT(slug) DO UPDATE SET
@@ -37,7 +46,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             updated_at = CURRENT_TIMESTAMP
         `).bind(jsonString).run();
       } catch (dbErr) {
-        console.error('D1 save error:', dbErr);
+        console.error('D1 save error for about:', dbErr);
       }
     }
 

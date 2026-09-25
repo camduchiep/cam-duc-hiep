@@ -9,43 +9,78 @@ const about = await getAboutData(db);
 ---
 
 <Layout title="About" activeNav="about">
-  <div style="max-width: 800px; display: flex; flex-direction: column; gap: 48px; background: #ffffff;">
-    <!-- Bio Text -->
-    <div style="font-size: 1.05rem; line-height: 1.8; color: #313030; font-weight: 400; display: flex; flex-direction: column; gap: 16px;">
-      {about.bioParagraphs && about.bioParagraphs.map((paragraph) => (
-        <p>{paragraph}</p>
-      ))}
-    </div>
+  <div style="max-width: 800px; display: flex; flex-direction: column; background: #ffffff;">
+    {about.content_html ? (
+      <div class="about-canvas-content" set:html={about.content_html} />
+    ) : (
+      <>
+        <!-- Legacy Fallback -->
+        <div style="font-size: 16px; line-height: 1.4; color: #313030; font-weight: 400; display: flex; flex-direction: column; gap: 16px;">
+          {about.bioParagraphs && about.bioParagraphs.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+        </div>
 
-    <!-- Contact & Location Info -->
-    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; color: #313030; padding-top: 16px;">
-      {about.location && (
-        <div style="color: #545454;">{about.location}</div>
-      )}
-      {about.email && (
-        <div>
-          <a 
-            href={`mailto:${about.email}`} 
-            style="color: #313030; text-decoration: underline; text-underline-offset: 4px; transition: color 0.2s;"
-            onmouseover="this.style.color='#545454';"
-            onmouseout="this.style.color='#313030';"
-          >
-            {about.email}
-          </a>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 16px; color: #313030; padding-top: 24px;">
+          {about.location && (
+            <div style="color: #545454;">{about.location}</div>
+          )}
+          {about.email && (
+            <div>
+              <a 
+                href={`mailto:${about.email}`} 
+                style="color: #313030; text-decoration: underline; text-underline-offset: 4px; transition: color 0.2s;"
+                onmouseover="this.style.color='#545454';"
+                onmouseout="this.style.color='#313030';"
+              >
+                {about.email}
+              </a>
+            </div>
+          )}
+          {about.phone && (
+            <div>
+              <a 
+                href={`tel:${about.phone.replace(/[^0-9+]/g, '')}`} 
+                style="color: #545454; text-decoration: none; transition: color 0.2s;"
+                onmouseover="this.style.color='#313030';"
+                onmouseout="this.style.color='#545454';"
+              >
+                {about.phone}
+              </a>
+            </div>
+          )}
         </div>
-      )}
-      {about.phone && (
-        <div>
-          <a 
-            href={`tel:${about.phone.replace(/[^0-9+]/g, '')}`} 
-            style="color: #545454; text-decoration: none; transition: color 0.2s;"
-            onmouseover="this.style.color='#313030';"
-            onmouseout="this.style.color='#545454';"
-          >
-            {about.phone}
-          </a>
-        </div>
-      )}
-    </div>
+      </>
+    )}
   </div>
 </Layout>
+
+<style is:global>
+  .about-canvas-content {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.4;
+    color: #313030;
+  }
+  .about-canvas-content p {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #313030;
+    margin-bottom: 1.5rem;
+  }
+  .about-canvas-content a {
+    color: #313030;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+  }
+  .about-canvas-content a:hover {
+    color: #545454;
+  }
+  .about-canvas-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 16px 0;
+  }
+</style>

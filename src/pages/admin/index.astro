@@ -9,7 +9,7 @@ const films = await getFilms(db);
 ---
 
 <AdminLayout title="Canvas Quản trị Phim" activeTab="films">
-  <!-- Cropper.js CDN for Free Cropping -->
+  <!-- Cropper.js CDN for Free Cropping & Ratios -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -65,9 +65,9 @@ const films = await getFilms(db);
       color: #0f172a;
     }
     .tb-btn.active {
-      background: #0f172a;
-      color: #ffffff;
-      border-color: #0f172a;
+      background: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
     }
     .tb-select {
       background: #ffffff;
@@ -136,14 +136,6 @@ const films = await getFilms(db);
       outline: 3px solid #0284c7;
       box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
     }
-    /* Drop Line Indicator between elements */
-    .drag-drop-line {
-      height: 3px;
-      background: #0284c7;
-      margin: 4px 0;
-      border-radius: 2px;
-      pointer-events: none;
-    }
     /* Modal backdrop */
     .modal-overlay {
       position: fixed;
@@ -163,7 +155,7 @@ const films = await getFilms(db);
       background: #ffffff;
       border-radius: 0.75rem;
       width: 100%;
-      max-width: 920px;
+      max-width: 950px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -266,7 +258,7 @@ const films = await getFilms(db);
             2. Canvas nội dung
           </h3>
           <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Ảnh đã chèn có thể <strong>kéo thả đổi vị trí</strong> giữa các đoạn văn/ảnh khác, hoặc bấm nút để <strong>Crop lại ảnh</strong> bất kỳ lúc nào.
+            Tự do soạn thảo văn bản và chèn ảnh tùy thích. Ảnh có thể <strong>kéo thả đổi vị trí</strong> giữa các đoạn văn/ảnh, và bấm nút để <strong>Crop lại ảnh</strong> theo tỷ lệ tự do hoặc tỷ lệ cố định.
           </p>
         </div>
       </div>
@@ -430,7 +422,7 @@ const films = await getFilms(db);
             Chèn & Chỉnh sửa ảnh (Crop tùy thích)
           </h3>
           <p id="modal-subtitle-heading" style="font-size: 0.82rem; color: #64748b; margin: 0.15rem 0 0 0;">
-            Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi lưu.
+            Chọn tỷ lệ có sẵn, tỷ lệ ảnh gốc hoặc tự do kéo thả 4 góc để crop ảnh.
           </p>
         </div>
         <button type="button" id="btn-modal-close" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer;">✕</button>
@@ -465,15 +457,26 @@ const films = await getFilms(db);
 
         <!-- Re-crop Notice (shown only when re-cropping existing image) -->
         <div id="modal-recrop-notice" style="display: none; background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.88rem; font-weight: 500;">
-          ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể kéo thả 4 góc tự do không giới hạn để cắt ảnh, hoặc xoay ảnh. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
+          ✂️ <strong>Đang Crop lại ảnh đã chọn:</strong> Bạn có thể chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do. Bấm "Save & Cập nhật ảnh" để áp dụng trực tiếp vào Canvas.
         </div>
 
         <!-- Preview & Crop Workspace -->
         <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">
-              Khung Preview & Crop ảnh tự do (Kéo thả 4 góc tùy thích):
-            </span>
+          <!-- Ratio Presets & Cropper Tools Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+            <!-- Aspect Ratio Buttons -->
+            <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-right: 0.2rem;">Tỷ lệ (Ratio):</span>
+              <button type="button" class="btn-crop-ratio tb-btn active" data-ratio="free" title="Kéo 4 góc tự do không giới hạn">Tự do</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="original" title="Giữ đúng tỷ lệ ảnh gốc nhưng cho phép co nhỏ lại để cắt bớt viền">Ảnh gốc</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="16:9" title="Tỷ lệ 16:9 ngang chuẩn video/màn hình">16:9</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="4:3" title="Tỷ lệ 4:3 điện ảnh truyền thống">4:3</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="1:1" title="Tỷ lệ vuông 1:1">1:1</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="3:2" title="Tỷ lệ máy ảnh 3:2">3:2</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="2.39:1" title="Tỷ lệ điện ảnh rộng Cinemascope">2.39:1</button>
+              <button type="button" class="btn-crop-ratio tb-btn" data-ratio="9:16" title="Tỷ lệ khung dọc 9:16">9:16</button>
+            </div>
+
             <!-- Cropper Controls -->
             <div style="display: flex; gap: 0.35rem;">
               <button type="button" id="btn-crop-rotate" class="tb-btn" style="font-size: 0.8rem;" title="Xoay ảnh 90 độ">🔄 Xoay 90°</button>
@@ -481,6 +484,7 @@ const films = await getFilms(db);
             </div>
           </div>
 
+          <!-- Cropper Container -->
           <div style="width: 100%; height: 380px; background: #0f172a; border-radius: 0.5rem; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <img id="cropper-target-img" src="" alt="Preview Target" style="max-width: 100%; display: none;" />
             <div id="cropper-empty-placeholder" style="color: #94a3b8; font-size: 0.95rem; text-align: center; padding: 1rem;">
@@ -642,6 +646,7 @@ const films = await getFilms(db);
     let isReCropping = false;
     let activeReCropImg = null;
     let draggedWrapper = null;
+    let currentSelectedRatio = 'free';
 
     // 2. Load Film Data into Canvas Form
     function loadFilm(slug) {
@@ -678,7 +683,6 @@ const films = await getFilms(db);
       viewLiveBtn.href = `/films/${film.slug}`;
       viewLiveBtn.style.display = 'inline-flex';
 
-      // Ensure all images are wrapped in draggable wrappers
       ensureDraggableImages();
     }
 
@@ -726,12 +730,10 @@ const films = await getFilms(db);
       creditsList.appendChild(row);
     });
 
-    // Film selection change
     selector.addEventListener('change', (e) => {
       loadFilm(e.target.value);
     });
 
-    // Auto-generate slug when creating new film
     titleInput.addEventListener('input', () => {
       if (selector.value === '__NEW_FILM__') {
         const rawTitle = titleInput.value.split('|')[0] || titleInput.value;
@@ -785,7 +787,7 @@ const films = await getFilms(db);
       });
     });
 
-    // 5. Image Modal & Crop System (Insert New OR Re-Crop Existing)
+    // 5. Image Modal & Crop System (Insert New OR Re-Crop Existing + Ratio Selection)
     btnInsertImage.addEventListener('click', () => {
       isReCropping = false;
       activeReCropImg = null;
@@ -802,15 +804,22 @@ const films = await getFilms(db);
       cropperTargetImg.style.display = 'none';
       cropperPlaceholder.style.display = 'block';
 
+      // Reset ratio buttons to 'free' active
+      currentSelectedRatio = 'free';
+      document.querySelectorAll('.btn-crop-ratio').forEach(b => {
+        if (b.getAttribute('data-ratio') === 'free') b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
       if (forReCrop) {
         modalHeading.innerText = '✂️ Crop lại ảnh đã chọn trong Canvas';
-        modalSubHeading.innerText = 'Kéo thả 4 góc tự do để thay đổi khung crop. Sau khi nhấn Save, ảnh trong Canvas sẽ được cập nhật trực tiếp.';
+        modalSubHeading.innerText = 'Chọn tỷ lệ phổ biến (16:9, 4:3, 1:1, ảnh gốc) hoặc kéo 4 góc tự do để cắt ảnh tùy thích.';
         modalInputSources.style.display = 'none';
         modalRecropNotice.style.display = 'block';
         modalSaveBtn.innerText = 'Save & Cập nhật ảnh';
       } else {
         modalHeading.innerText = 'Chèn & Chỉnh sửa ảnh (Crop tùy thích)';
-        modalSubHeading.innerText = 'Tải ảnh lên Cloudflare R2 hoặc dán link R2, sau đó kéo các góc crop tự do trước khi insert.';
+        modalSubHeading.innerText = 'Tải ảnh lên Cloudflare R2 hoặc dán link R2, chọn tỷ lệ crop tùy thích trước khi insert.';
         modalInputSources.style.display = 'grid';
         modalRecropNotice.style.display = 'none';
         modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
@@ -837,6 +846,42 @@ const films = await getFilms(db);
     modalCloseBtn.addEventListener('click', closeImageModal);
     modalCancelBtn.addEventListener('click', closeImageModal);
 
+    function applyCropperRatio(ratioKey) {
+      if (!cropper) return;
+      currentSelectedRatio = ratioKey;
+
+      if (ratioKey === 'free') {
+        cropper.setAspectRatio(NaN); // Tự do không giới hạn
+      } else if (ratioKey === 'original') {
+        // Khóa đúng theo tỷ lệ ảnh gốc nhưng cho phép co nhỏ lại tùy thích
+        const imgData = cropper.getImageData();
+        if (imgData && imgData.naturalWidth && imgData.naturalHeight) {
+          cropper.setAspectRatio(imgData.naturalWidth / imgData.naturalHeight);
+        }
+      } else if (ratioKey === '16:9') {
+        cropper.setAspectRatio(16 / 9);
+      } else if (ratioKey === '4:3') {
+        cropper.setAspectRatio(4 / 3);
+      } else if (ratioKey === '1:1') {
+        cropper.setAspectRatio(1);
+      } else if (ratioKey === '3:2') {
+        cropper.setAspectRatio(3 / 2);
+      } else if (ratioKey === '2.39:1') {
+        cropper.setAspectRatio(2.39 / 1);
+      } else if (ratioKey === '9:16') {
+        cropper.setAspectRatio(9 / 16);
+      }
+    }
+
+    // Ratio Preset Buttons Events
+    document.querySelectorAll('.btn-crop-ratio').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-crop-ratio').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyCropperRatio(btn.getAttribute('data-ratio'));
+      });
+    });
+
     function setupCropper(srcUrl) {
       if (cropper) {
         cropper.destroy();
@@ -848,13 +893,17 @@ const films = await getFilms(db);
       cropperTargetImg.style.display = 'block';
 
       cropper = new Cropper(cropperTargetImg, {
-        aspectRatio: NaN, // Free crop, no aspect ratio restrictions!
+        aspectRatio: NaN, // Default to free crop
         viewMode: 1,
         autoCropArea: 0.95,
         responsive: true,
         background: false,
         ready() {
           modalSaveBtn.disabled = false;
+          // Re-apply ratio if user previously clicked another ratio
+          if (currentSelectedRatio !== 'free') {
+            applyCropperRatio(currentSelectedRatio);
+          }
         }
       });
     }
@@ -866,14 +915,12 @@ const films = await getFilms(db);
 
       modalUploadLoading.style.display = 'block';
 
-      // Preview immediately
       const reader = new FileReader();
       reader.onload = (loadEvt) => {
         setupCropper(loadEvt.target.result);
       };
       reader.readAsDataURL(file);
 
-      // Upload to R2
       const formData = new FormData();
       formData.append('file', file);
       try {
@@ -940,11 +987,9 @@ const films = await getFilms(db);
         }
 
         if (isReCropping && activeReCropImg) {
-          // Case 1: Re-crop existing image in-place
           activeReCropImg.src = finalImageUrl;
           positionFloatingToolbar(activeReCropImg);
         } else {
-          // Case 2: Insert brand new image
           canvasEditor.focus();
           if (savedSelectionRange) {
             const sel = window.getSelection();
@@ -1088,7 +1133,6 @@ const films = await getFilms(db);
       });
     }
 
-    // Canvas Drop Target Handling
     canvasEditor.addEventListener('dragover', (e) => {
       if (!draggedWrapper) return;
       e.preventDefault();
@@ -1143,7 +1187,6 @@ const films = await getFilms(db);
       }
     });
 
-    // Helper: Wrap any bare images in canvas into draggable wrappers
     function ensureDraggableImages() {
       const allImgs = canvasEditor.querySelectorAll('img');
       allImgs.forEach(img => {
@@ -1212,7 +1255,6 @@ const films = await getFilms(db);
       const title = titleInput.value.trim();
       const format = formatInput.value.trim();
 
-      // Clean selection styling before saving
       if (selectedImageElement) {
         selectedImageElement.classList.remove('selected-img');
       }

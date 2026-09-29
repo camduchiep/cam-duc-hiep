@@ -8,7 +8,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (pathname.startsWith('/admin')) {
     const isLoginPage = pathname === '/admin/login';
     const sessionCookie = context.cookies.get('admin_session')?.value;
-    const isAuthenticated = await verifySession(sessionCookie);
+    const authSecret = context.locals.runtime?.env?.AUTH_SECRET;
+    const isAuthenticated = await verifySession(sessionCookie, authSecret);
 
     if (!isAuthenticated && !isLoginPage) {
       return context.redirect('/admin/login');

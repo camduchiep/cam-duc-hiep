@@ -10,7 +10,15 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   // Default admin password or environment variable ADMIN_PASSWORD
   const env = locals.runtime?.env;
-  const configuredPassword = env?.ADMIN_PASSWORD || 'camduchiep@2026';
+  const configuredPassword = env?.ADMIN_PASSWORD;
+  const authSecret = env?.AUTH_SECRET;
+
+  if (!configuredPassword || !authSecret) {
+    return new Response(JSON.stringify({ error: 'Hệ thống đăng nhập chưa được cấu hình.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
   if (!username || !password) {
     return new Response(JSON.stringify({ error: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.' }), {
@@ -31,7 +39,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   }
 
   // Create signed session token
-  const sessionToken = await signSession(username);
+  const sessionToken = await signSession(username, authSecret);
 
   // Set HTTP-only Cookie (7 days)
   cookies.set('admin_session', sessionToken, {

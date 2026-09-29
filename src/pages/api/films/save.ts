@@ -1,9 +1,15 @@
 import type { APIRoute } from 'astro';
 import type { FilmItem } from '../../../lib/films';
+import { verifySession } from '../../../lib/auth';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
+  const authSecret = locals.runtime?.env?.AUTH_SECRET;
+  if (!(await verifySession(cookies.get('admin_session')?.value, authSecret))) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+  }
+
   try {
     const body: FilmItem = await request.json();
 
@@ -58,6 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         ).run();
       } catch (dbErr) {
         console.error('D1 save error for films:', dbErr);
+        return new Response(JSON.stringify({ error: 'Không thể lưu thông tin phim vào cơ sở dữ liệu.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
     }
 

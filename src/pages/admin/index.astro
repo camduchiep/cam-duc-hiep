@@ -1604,16 +1604,26 @@ const films = await getFilms(db);
           try {
             const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
             const uploadData = await uploadRes.json();
-            if (uploadData.success && uploadData.url) {
-              finalImageUrl = uploadData.url;
+
+            if (!uploadRes.ok || !uploadData.success || !uploadData.url) {
+              throw new Error(uploadData.error || `Upload ảnh thất bại (HTTP ${uploadRes.status}).`);
             }
+
+            finalImageUrl = uploadData.url;
           } catch (e) {
-            console.warn('Could not upload cropped blob to R2, falling back to data URL:', e);
+            console.error('Could not upload cropped image to R2:', e);
+            alert(e instanceof Error ? e.message : 'Không thể tải ảnh lên R2.');
+            modalSaveBtn.disabled = false;
+            modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+            return;
           }
         }
 
         if (!finalImageUrl) {
-          finalImageUrl = croppedCanvas.toDataURL('image/png');
+          alert('Không nhận được URL ảnh từ R2.');
+          modalSaveBtn.disabled = false;
+          modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
+          return;
         }
 
         if (isThumbnailCrop) {

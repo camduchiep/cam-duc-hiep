@@ -851,6 +851,13 @@ const films = await getFilms(db);
     let draggedWrapper = null;
     let currentSelectedRatio = 'free';
 
+    // Ảnh đang nạp trong modal.
+    // + currentSourceUrl: URL gốc nếu ảnh được DÁN LINK (không phải file cục bộ).
+    // + cropperSourceTainted: true khi canvas bị "taint" vì ảnh cross-origin thiếu CORS.
+    //   Khi đó KHÔNG thể xuất blob để crop, phải dùng lại chính URL gốc.
+    let currentSourceUrl = '';
+    let cropperSourceTainted = false;
+
     // Undo / Redo
     let historyStack = [];
     let historyIndex = -1;
@@ -989,7 +996,7 @@ const films = await getFilms(db);
       modalHeading.innerText = '✂️ Crop ảnh Thumbnail phim';
       modalSubHeading.innerText = 'Cắt ảnh theo tỉ lệ 16:9 hoặc 16:10 chuẩn poster trang chủ.';
       modalSaveBtn.innerText = 'Lưu làm Thumbnail';
-      setupCropper(currentUrl);
+      setupCropper(currentUrl, 'link');
       setTimeout(() => {
         applyCropperRatio('16:9');
         document.querySelectorAll('.btn-crop-ratio').forEach(b => {
@@ -1300,14 +1307,74 @@ const films = await getFilms(db);
       });
     });
 
-    function setupCropper(srcUrl) {
+    // Nạp ảnh vào thẻ <img> kèm crossOrigin="anonymous" để canvas KHÔNG bị taint khi R2 có CORS.
+    // Trả về true nếu trình duyệt đọc được pixel (CORS hợp lệ), false nếu không.
+    function loadImageWithCORS(srcUrl, crossOrigin) {
+      return new Promise(function (resolve) {
+        const probe = new Image();
+        if (crossOrigin) probe.crossOrigin = 'anonymous';
+        probe.onload = function () { resolve(true); };
+        probe.onerror = function () { resolve(false); };
+        probe.src = srcUrl;
+      });
+    }
+
+    // Chuyển ảnh remote thành data: URL (cùng origin => canvas luôn đọc được).
+    // Đây là "đai an toàn" khi bucket chưa cấu hình CORS.
+    async function urlToDataUrl(srcUrl) {
+      try {
+        const res = await fetch(srcUrl, { mode: 'cors' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        return await new Promise(function (resolve, reject) {
+          const fr = new FileReader();
+          fr.onload = function () { resolve(String(fr.result)); };
+          fr.onerror = function () { reject(fr.error); };
+          fr.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.warn('Không thể tải ảnh qua CORS (bucket thiếu Access-Control-Allow-Origin?):', err);
+        return '';
+      }
+    }
+
+    /**
+     * Chuẩn bị nguồn ảnh cho Cropper.
+     * - "upload"  : file người dùng chọn (data URL sẵn) => luôn crop bình thường.
+     * - "link"    : URL dán tay => thử CORS trước; nếu được thì chuyển sang data URL để crop,
+     *               nếu bucket chặn CORS thì vẫn hiển thị bình thường nhưng dùng lại URL gốc khi chèn.
+     */
+    async function setupCropper(srcUrl, source) {
+      const isLink = source === 'link' && /^https?:\/\//i.test(String(srcUrl));
+      currentSourceUrl = isLink ? srcUrl : '';
+      cropperSourceTainted = false;
+
+      let finalSrc = srcUrl;
+
+      if (isLink) {
+        const corsOk = await loadImageWithCORS(srcUrl, true);
+        if (!corsOk) {
+          // Bucket chưa mở CORS: canvas sẽ bị taint nếu crop trực tiếp.
+          // Ưu tiên tải về thành data URL để CROP được như ảnh tải từ máy.
+          const dataUrl = await urlToDataUrl(srcUrl);
+          if (dataUrl) {
+            finalSrc = dataUrl;
+          } else {
+            // Không tải được => vẫn hiển thị ảnh gốc, khi chèn sẽ dùng URL gốc (không crop).
+            cropperSourceTainted = true;
+            finalSrc = srcUrl;
+          }
+        }
+      }
+
       if (cropper) {
         cropper.destroy();
         cropper = null;
       }
 
       cropperPlaceholder.style.display = 'none';
-      cropperTargetImg.src = srcUrl;
+      cropperTargetImg.removeAttribute('crossorigin');
+      cropperTargetImg.src = finalSrc;
       cropperTargetImg.style.display = 'block';
 
       cropper = new Cropper(cropperTargetImg, {
@@ -1317,10 +1384,14 @@ const films = await getFilms(db);
         responsive: true,
         background: false,
         ready() {
+          // Nếu đang ở chế độ tainted (hiếm), việc crop không xuất được file => thông báo rõ cho người dùng.
           modalSaveBtn.disabled = false;
           if (currentSelectedRatio !== 'free') {
             applyCropperRatio(currentSelectedRatio);
           }
+        },
+        error() {
+          cropperSourceTainted = true;
         }
       });
     }
@@ -1370,27 +1441,41 @@ const films = await getFilms(db);
       if (!isGif) {
         const reader = new FileReader();
         reader.onload = (loadEvt) => {
-          setupCropper(loadEvt.target.result);
+          setupCropper(loadEvt.target.result, 'upload');
         };
         reader.readAsDataURL(file);
       } else {
         const reader = new FileReader();
         reader.onload = (loadEvt) => {
           checkAndHandleGif(modalLinkInput.value || loadEvt.target.result, file);
-          setupCropper(loadEvt.target.result);
+          setupCropper(loadEvt.target.result, 'upload');
         };
         reader.readAsDataURL(file);
       }
     });
 
-    btnLoadLink.addEventListener('click', () => {
+    btnLoadLink.addEventListener('click', async () => {
       const url = modalLinkInput.value.trim();
       if (!url) {
         alert('Vui lòng dán link ảnh/GIF từ R2 hoặc Web vào ô nhập liệu.');
         return;
       }
       checkAndHandleGif(url, null);
-      setupCropper(url);
+      if (currentLoadedGifUrl) {
+        // GIF: chèn trực tiếp bằng URL gốc để giữ animation, không qua Cropper.
+        currentSourceUrl = '';
+        cropperSourceTainted = false;
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        cropperPlaceholder.style.display = 'block';
+        cropperTargetImg.style.display = 'none';
+        modalSaveBtn.disabled = false;
+        return;
+      }
+      modalSaveBtn.disabled = true;
+      setupCropper(url, 'link');
     });
 
     btnCropRotate.addEventListener('click', () => {
@@ -1591,87 +1676,107 @@ const films = await getFilms(db);
       modalSaveBtn.disabled = true;
       modalSaveBtn.innerText = 'Đang xử lý ảnh...';
 
-      const croppedCanvas = cropper.getCroppedCanvas();
-
-      croppedCanvas.toBlob(async (blob) => {
-        let finalImageUrl = '';
-
-        if (blob) {
-          const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
-          const formData = new FormData();
-          formData.append('file', croppedFile);
-
+      // Đọc pixel từ canvas. Trả về null nếu canvas bị "taint" (ảnh cross-origin thiếu CORS),
+      // thay vì để toBlob() trả null âm thầm.
+      function exportCroppedBlob() {
+        return new Promise((resolve) => {
           try {
-            const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
-            const uploadData = await uploadRes.json();
+            const canvas = cropper.getCroppedCanvas();
+            if (!canvas) return resolve(null);
+            canvas.toBlob((blob) => resolve(blob), 'image/png');
+          } catch (err) {
+            console.warn('Canvas không đọc được pixel (cross-origin thiếu CORS):', err);
+            resolve(null);
+          }
+        });
+      }
 
-            if (!uploadRes.ok || !uploadData.success || !uploadData.url) {
-              throw new Error(uploadData.error || `Upload ảnh thất bại (HTTP ${uploadRes.status}).`);
-            }
+      const blob = await exportCroppedBlob();
+      let finalImageUrl = '';
 
-            finalImageUrl = uploadData.url;
-          } catch (e) {
-            console.error('Could not upload cropped image to R2:', e);
+      if (!blob && cropperSourceTainted && currentSourceUrl) {
+        // Bucket chưa mở CORS: không thể crop, nhưng vẫn CHÈN ĐƯỢC ảnh bằng URL gốc.
+        finalImageUrl = currentSourceUrl;
+      } else if (blob) {
+        const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
+        const formData = new FormData();
+        formData.append('file', croppedFile);
+
+        try {
+          const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+          const uploadData = await uploadRes.json();
+
+          if (!uploadRes.ok || !uploadData.success || !uploadData.url) {
+            throw new Error(uploadData.error || `Upload ảnh thất bại (HTTP ${uploadRes.status}).`);
+          }
+
+          finalImageUrl = uploadData.url;
+        } catch (e) {
+          console.error('Could not upload cropped image to R2:', e);
+          // Nếu đã có URL gốc (ảnh dán link) thì vẫn chèn được ảnh thay vì bỏ dở.
+          if (currentSourceUrl) {
+            finalImageUrl = currentSourceUrl;
+          } else {
             alert(e instanceof Error ? e.message : 'Không thể tải ảnh lên R2.');
             modalSaveBtn.disabled = false;
             modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
             return;
           }
         }
+      }
 
-        if (!finalImageUrl) {
-          alert('Không nhận được URL ảnh từ R2.');
-          modalSaveBtn.disabled = false;
-          modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
-          return;
-        }
-
-        if (isThumbnailCrop) {
-          thumbnailInput.value = finalImageUrl;
-          updateThumbnailPreview(finalImageUrl);
-          isThumbnailCrop = false;
-        } else if (isReCropping && activeReCropImg) {
-          activeReCropImg.src = finalImageUrl;
-          positionFloatingToolbar(activeReCropImg);
-          recordHistory(true);
-        } else {
-          canvasEditor.focus();
-          if (savedSelectionRange) {
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(savedSelectionRange);
-          }
-
-          const imgWrapper = document.createElement('div');
-          imgWrapper.className = 'canvas-img-wrapper';
-          imgWrapper.setAttribute('draggable', 'true');
-          imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
-
-          const img = document.createElement('img');
-          img.src = finalImageUrl;
-          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
-          imgWrapper.appendChild(img);
-
-          const pAfter = document.createElement('p');
-          pAfter.style.cssText = 'font-size: 15px; color: #313030;';
-          pAfter.innerHTML = '<br/>';
-
-          if (savedSelectionRange) {
-            savedSelectionRange.insertNode(pAfter);
-            savedSelectionRange.insertNode(imgWrapper);
-          } else {
-            canvasEditor.appendChild(imgWrapper);
-            canvasEditor.appendChild(pAfter);
-          }
-
-          attachDragEventsToWrapper(imgWrapper);
-          recordHistory(true);
-        }
-
-        closeImageModal();
+      if (!finalImageUrl) {
+        alert('Không thể đọc hoặc tải ảnh này. Vui lòng kiểm tra link ảnh (bucket R2 cần cấu hình CORS) rồi thử lại.');
         modalSaveBtn.disabled = false;
         modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
-      }, 'image/png');
+        return;
+      }
+
+      if (isThumbnailCrop) {
+        thumbnailInput.value = finalImageUrl;
+        updateThumbnailPreview(finalImageUrl);
+        isThumbnailCrop = false;
+      } else if (isReCropping && activeReCropImg) {
+        activeReCropImg.src = finalImageUrl;
+        positionFloatingToolbar(activeReCropImg);
+        recordHistory(true);
+      } else {
+        canvasEditor.focus();
+        if (savedSelectionRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedSelectionRange);
+        }
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'canvas-img-wrapper';
+        imgWrapper.setAttribute('draggable', 'true');
+        imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+        const img = document.createElement('img');
+        img.src = finalImageUrl;
+        img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer; border-radius: 2px;';
+        imgWrapper.appendChild(img);
+
+        const pAfter = document.createElement('p');
+        pAfter.style.cssText = 'font-size: 15px; color: #313030;';
+        pAfter.innerHTML = '<br/>';
+
+        if (savedSelectionRange) {
+          savedSelectionRange.insertNode(pAfter);
+          savedSelectionRange.insertNode(imgWrapper);
+        } else {
+          canvasEditor.appendChild(imgWrapper);
+          canvasEditor.appendChild(pAfter);
+        }
+
+        attachDragEventsToWrapper(imgWrapper);
+        recordHistory(true);
+      }
+
+      closeImageModal();
+      modalSaveBtn.disabled = false;
+      modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
     });
 
     // 6. Floating Media Toolbar & Loop Toggle & Move Position
@@ -1774,7 +1879,7 @@ const films = await getFilms(db);
       isReCropping = true;
       activeReCropImg = selectedImageElement;
       openImageModal(true);
-      setupCropper(selectedImageElement.src);
+      setupCropper(selectedImageElement.src, 'link');
     });
 
     // C: MOVE MEDIA UP

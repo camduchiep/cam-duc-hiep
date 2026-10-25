@@ -630,6 +630,12 @@ const initialHTML = cv.content_html || defaultCVHTML;
     let draggedWrapper = null;
     let currentSelectedRatio = 'free';
 
+    // Ảnh đang nạp trong modal:
+    // + currentSourceUrl: URL gốc khi ảnh được DÁN LINK.
+    // + cropperSourceTainted: canvas bị taint vì ảnh cross-origin thiếu CORS (không xuất được blob).
+    let currentSourceUrl = '';
+    let cropperSourceTainted = false;
+
     // Undo / Redo
     let historyStack = [canvasEditor.innerHTML];
     let historyIndex = 0;
@@ -973,10 +979,64 @@ const initialHTML = cv.content_html || defaultCVHTML;
       });
     });
 
-    function setupCropper(srcUrl) {
+    // Nạp ảnh kèm crossOrigin="anonymous" để canvas KHÔNG bị taint khi bucket R2 có CORS.
+    function loadImageWithCORS(srcUrl) {
+      return new Promise(function (resolve) {
+        const probe = new Image();
+        probe.crossOrigin = 'anonymous';
+        probe.onload = function () { resolve(true); };
+        probe.onerror = function () { resolve(false); };
+        probe.src = srcUrl;
+      });
+    }
+
+    // Tải ảnh remote thành data: URL (cùng origin => canvas luôn đọc được pixel).
+    async function urlToDataUrl(srcUrl) {
+      try {
+        const res = await fetch(srcUrl, { mode: 'cors' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        return await new Promise(function (resolve, reject) {
+          const fr = new FileReader();
+          fr.onload = function () { resolve(String(fr.result)); };
+          fr.onerror = function () { reject(fr.error); };
+          fr.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.warn('Không thể tải ảnh qua CORS (bucket thiếu Access-Control-Allow-Origin?):', err);
+        return '';
+      }
+    }
+
+    /**
+     * Chuẩn bị nguồn ảnh cho Cropper.
+     * - "upload": file từ máy (data URL) => crop bình thường.
+     * - "link"  : URL dán tay => thử CORS, chuyển data URL để crop; nếu bị chặn CORS thì
+     *             vẫn hiển thị ảnh và dùng lại URL gốc khi chèn.
+     */
+    async function setupCropper(srcUrl, source) {
+      const isLink = source === 'link' && /^https?:\/\//i.test(String(srcUrl));
+      currentSourceUrl = isLink ? srcUrl : '';
+      cropperSourceTainted = false;
+
+      let finalSrc = srcUrl;
+
+      if (isLink) {
+        if (!(await loadImageWithCORS(srcUrl))) {
+          const dataUrl = await urlToDataUrl(srcUrl);
+          if (dataUrl) {
+            finalSrc = dataUrl;
+          } else {
+            cropperSourceTainted = true;
+            finalSrc = srcUrl;
+          }
+        }
+      }
+
       if (cropper) { cropper.destroy(); cropper = null; }
       cropperPlaceholder.style.display = 'none';
-      cropperTargetImg.src = srcUrl;
+      cropperTargetImg.removeAttribute('crossorigin');
+      cropperTargetImg.src = finalSrc;
       cropperTargetImg.style.display = 'block';
 
       cropper = new Cropper(cropperTargetImg, {
@@ -988,6 +1048,9 @@ const initialHTML = cv.content_html || defaultCVHTML;
         ready() {
           modalSaveBtn.disabled = false;
           if (currentSelectedRatio !== 'free') applyCropperRatio(currentSelectedRatio);
+        },
+        error() {
+          cropperSourceTainted = true;
         }
       });
     }
@@ -998,7 +1061,7 @@ const initialHTML = cv.content_html || defaultCVHTML;
 
       modalUploadLoading.style.display = 'block';
       const reader = new FileReader();
-      reader.onload = (loadEvt) => setupCropper(loadEvt.target.result);
+      reader.onload = (loadEvt) => setupCropper(loadEvt.target.result, 'upload');
       reader.readAsDataURL(file);
 
       const formData = new FormData();
@@ -1014,10 +1077,11 @@ const initialHTML = cv.content_html || defaultCVHTML;
       }
     });
 
-    btnLoadLink.addEventListener('click', () => {
+    btnLoadLink.addEventListener('click', async () => {
       const url = modalLinkInput.value.trim();
       if (!url) return alert('Vui lòng dán link ảnh từ R2 hoặc Web.');
-      setupCropper(url);
+      modalSaveBtn.disabled = true;
+      setupCropper(url, 'link');
     });
 
     btnCropRotate.addEventListener('click', () => { if (cropper) cropper.rotate(90); });
@@ -1028,66 +1092,88 @@ const initialHTML = cv.content_html || defaultCVHTML;
       modalSaveBtn.disabled = true;
       modalSaveBtn.innerText = 'Đang xử lý ảnh...';
 
-      const croppedCanvas = cropper.getCroppedCanvas();
-      croppedCanvas.toBlob(async (blob) => {
-        let finalImageUrl = '';
-        if (blob) {
-          const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
-          const formData = new FormData();
-          formData.append('file', croppedFile);
-          try {
-            const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
-            const uploadData = await uploadRes.json();
-            if (uploadData.success && uploadData.url) finalImageUrl = uploadData.url;
-          } catch (e) {
-            console.warn('R2 save error:', e);
-          }
+      // Đọc pixel từ canvas; trả null nếu canvas bị taint thay vì để toDataURL() ném SecurityError.
+      const exportCroppedBlob = () => new Promise((resolve) => {
+        try {
+          const canvas = cropper.getCroppedCanvas();
+          if (!canvas) return resolve(null);
+          canvas.toBlob((blob) => resolve(blob), 'image/png');
+        } catch (err) {
+          console.warn('Canvas không đọc được pixel (cross-origin thiếu CORS):', err);
+          resolve(null);
+        }
+      });
+
+      const blob = await exportCroppedBlob();
+      let finalImageUrl = '';
+
+      if (blob) {
+        const croppedFile = new File([blob], `cropped_${Date.now()}.png`, { type: 'image/png' });
+        const formData = new FormData();
+        formData.append('file', croppedFile);
+        try {
+          const uploadRes = await fetch('/api/upload/r2', { method: 'POST', body: formData });
+          const uploadData = await uploadRes.json();
+          if (uploadData.success && uploadData.url) finalImageUrl = uploadData.url;
+        } catch (e) {
+          console.warn('R2 save error:', e);
         }
 
-        if (!finalImageUrl) finalImageUrl = croppedCanvas.toDataURL('image/png');
+        // Không upload được thì nhúng data URL (chỉ dùng khi canvas KHÔNG bị taint).
+        if (!finalImageUrl) finalImageUrl = cropper.getCroppedCanvas().toDataURL('image/png');
+      } else if (currentSourceUrl) {
+        // Bucket chưa mở CORS: không crop được, nhưng vẫn chèn ảnh bằng URL gốc.
+        finalImageUrl = currentSourceUrl;
+      }
 
-        if (isReCropping && activeReCropImg) {
-          activeReCropImg.src = finalImageUrl;
-          positionFloatingToolbar(activeReCropImg);
-          recordHistory(true);
-        } else {
-          canvasEditor.focus();
-          if (savedSelectionRange) {
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(savedSelectionRange);
-          }
-
-          const imgWrapper = document.createElement('div');
-          imgWrapper.className = 'canvas-img-wrapper';
-          imgWrapper.setAttribute('draggable', 'true');
-          imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
-
-          const img = document.createElement('img');
-          img.src = finalImageUrl;
-          img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
-          imgWrapper.appendChild(img);
-
-          const pAfter = document.createElement('p');
-          pAfter.style.cssText = 'font-size: 16px; line-height: 1.4; color: #313030;';
-          pAfter.innerHTML = '<br/>';
-
-          if (savedSelectionRange) {
-            savedSelectionRange.insertNode(pAfter);
-            savedSelectionRange.insertNode(imgWrapper);
-          } else {
-            canvasEditor.appendChild(imgWrapper);
-            canvasEditor.appendChild(pAfter);
-          }
-
-          attachDragEventsToWrapper(imgWrapper);
-          recordHistory(true);
-        }
-
-        closeImageModal();
+      if (!finalImageUrl) {
+        alert('Không thể đọc hoặc tải ảnh này. Vui lòng kiểm tra link ảnh (bucket R2 cần cấu hình CORS) rồi thử lại.');
         modalSaveBtn.disabled = false;
         modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
-      }, 'image/png');
+        return;
+      }
+
+      if (isReCropping && activeReCropImg) {
+        activeReCropImg.src = finalImageUrl;
+        positionFloatingToolbar(activeReCropImg);
+        recordHistory(true);
+      } else {
+        canvasEditor.focus();
+        if (savedSelectionRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedSelectionRange);
+        }
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'canvas-img-wrapper';
+        imgWrapper.setAttribute('draggable', 'true');
+        imgWrapper.style.cssText = 'text-align: center; margin: 16px 0; cursor: grab;';
+
+        const img = document.createElement('img');
+        img.src = finalImageUrl;
+        img.style.cssText = 'max-width: 100%; height: auto; display: inline-block; cursor: pointer;';
+        imgWrapper.appendChild(img);
+
+        const pAfter = document.createElement('p');
+        pAfter.style.cssText = 'font-size: 16px; line-height: 1.4; color: #313030;';
+        pAfter.innerHTML = '<br/>';
+
+        if (savedSelectionRange) {
+          savedSelectionRange.insertNode(pAfter);
+          savedSelectionRange.insertNode(imgWrapper);
+        } else {
+          canvasEditor.appendChild(imgWrapper);
+          canvasEditor.appendChild(pAfter);
+        }
+
+        attachDragEventsToWrapper(imgWrapper);
+        recordHistory(true);
+      }
+
+      closeImageModal();
+      modalSaveBtn.disabled = false;
+      modalSaveBtn.innerText = 'Save & Chèn vào Canvas';
     });
 
     // Floating Image Toolbar
@@ -1130,7 +1216,7 @@ const initialHTML = cv.content_html || defaultCVHTML;
       isReCropping = true;
       activeReCropImg = selectedImageElement;
       openImageModal(true);
-      setupCropper(selectedImageElement.src);
+      setupCropper(selectedImageElement.src, 'link');
     });
 
     btnImgMoveUp.addEventListener('click', () => {

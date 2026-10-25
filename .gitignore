@@ -26,3 +26,6 @@ pnpm-debug.log*
 # Temporary reference renders
 ref/pages/
 ref/hires/
+
+# Wrangler state dùng khi chạy build/dev cục bộ
+.tmp-wrangler/

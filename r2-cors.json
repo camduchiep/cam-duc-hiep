@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://www.hiepcm.com",
+          "https://hiepcm.com",
+          "http://localhost:4321",
+          "http://127.0.0.1:4321"
+        ],
+        "methods": ["GET", "HEAD"]
+      },
+      "exposeHeaders": ["Content-Type", "Content-Length", "ETag", "Last-Modified"],
+      "maxAgeSeconds": 86400
+    }
+  ]
+}
